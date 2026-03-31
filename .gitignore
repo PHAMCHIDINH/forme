@@ -1,0 +1,14 @@
+.worktrees/
+
+# frontend
+chidinh_client/node_modules/
+chidinh_client/dist/
+chidinh_client/.vercel/
+chidinh_client/.env
+
+# backend
+chidinh_api/bin/
+chidinh_api/.env
+
+# misc
+.DS_Store
