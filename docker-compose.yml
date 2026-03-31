@@ -5,10 +5,28 @@ services:
       POSTGRES_DB: pdh
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pdh"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  migrate:
+    build:
+      context: ./chidinh_api
+    env_file:
+      - ./chidinh_api/.env.example
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/pdh?sslmode=disable
+    command: ["/app/migrate", "up"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   backend:
     build:
@@ -20,7 +38,10 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     build:
