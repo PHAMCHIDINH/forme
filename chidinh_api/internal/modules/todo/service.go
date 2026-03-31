@@ -7,10 +7,17 @@ import (
 )
 
 type Service struct {
-	repository *Repository
+	repository TodoStore
 }
 
-func NewService(repository *Repository) *Service {
+type TodoStore interface {
+	List(ctx context.Context, ownerID string) ([]Item, error)
+	Create(ctx context.Context, ownerID string, title string) (Item, error)
+	Update(ctx context.Context, ownerID string, todoID string, title *string, completed *bool) (Item, error)
+	Delete(ctx context.Context, ownerID string, todoID string) error
+}
+
+func NewService(repository TodoStore) *Service {
 	return &Service{repository: repository}
 }
 
