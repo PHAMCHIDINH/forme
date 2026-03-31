@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	dbqueries "github.com/PHAMCHIDINH/forme/chidinh_api/db/sqlc"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/auth"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/todo"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
@@ -31,11 +32,13 @@ func Run(cfg config.Config) error {
 		return err
 	}
 
-	authService := auth.NewService(cfg)
+	queries := dbqueries.New(pool)
+
+	authService := auth.NewService(cfg, queries)
 	authHandler := auth.NewHandler(cfg, authService)
 	authMiddleware := middleware.NewAuth(authService)
 
-	todoRepository := todo.NewRepository(pool)
+	todoRepository := todo.NewRepository(queries)
 	todoService := todo.NewService(todoRepository)
 	todoHandler := todo.NewHandler(todoService)
 

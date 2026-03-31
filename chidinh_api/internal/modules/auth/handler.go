@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -36,15 +37,19 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.Login(req.Username, req.Password)
+	session, err := h.service.Login(r.Context(), req.Username, req.Password)
 	if err != nil {
-		apiresponse.WriteError(w, http.StatusUnauthorized, "unauthorized", "invalid credentials")
+		if errors.Is(err, ErrInvalidCredentials) {
+			apiresponse.WriteError(w, http.StatusUnauthorized, "unauthorized", "invalid credentials")
+			return
+		}
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to authenticate")
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
-		Value:    token,
+		Value:    session.Token,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   h.cfg.CookieSecure,
@@ -53,13 +58,35 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	apiresponse.WriteJSON(w, http.StatusOK, map[string]any{
-		"user": h.service.CurrentUser(),
+		"user": session.User,
 	})
 }
 
-func (h *Handler) Me(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(CookieName)
+	if err != nil {
+		apiresponse.WriteError(w, http.StatusUnauthorized, "unauthorized", "authentication required")
+		return
+	}
+
+	claims, err := h.service.ParseToken(cookie.Value)
+	if err != nil {
+		apiresponse.WriteError(w, http.StatusUnauthorized, "unauthorized", "invalid authentication token")
+		return
+	}
+
+	user, err := h.service.CurrentUser(r.Context(), claims.Subject)
+	if err != nil {
+		if errors.Is(err, ErrOwnerNotFound) {
+			apiresponse.WriteError(w, http.StatusUnauthorized, "unauthorized", "invalid authentication token")
+			return
+		}
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to load authenticated user")
+		return
+	}
+
 	apiresponse.WriteJSON(w, http.StatusOK, map[string]any{
-		"user": h.service.CurrentUser(),
+		"user": user,
 	})
 }
 

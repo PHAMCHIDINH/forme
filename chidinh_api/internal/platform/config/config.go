@@ -11,7 +11,7 @@ type Config struct {
 	DatabaseURL        string
 	JWTSecret          string
 	OwnerUsername      string
-	OwnerPassword      string
+	OwnerPasswordHash  string
 	CORSAllowedOrigins []string
 	CookieSecure       bool
 	CookieSameSite     string
@@ -33,9 +33,9 @@ func Load() Config {
 		ownerUsername = "owner"
 	}
 
-	ownerPassword := os.Getenv("OWNER_PASSWORD")
-	if ownerPassword == "" {
-		ownerPassword = "owner123"
+	ownerPasswordHash := os.Getenv("OWNER_PASSWORD_HASH")
+	if ownerPasswordHash == "" {
+		ownerPasswordHash = "$2b$12$Ql1OEDm9gTzCvIPdp2AvJ.8zYe6c7kwEZKtbG8ybULk8OyLT5DCWC"
 	}
 
 	cookieSameSite := os.Getenv("COOKIE_SAME_SITE")
@@ -49,7 +49,7 @@ func Load() Config {
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		OwnerUsername:      ownerUsername,
-		OwnerPassword:      ownerPassword,
+		OwnerPasswordHash:  ownerPasswordHash,
 		CORSAllowedOrigins: parseCSVEnv("CORS_ALLOWED_ORIGINS"),
 		CookieSecure:       parseBool(os.Getenv("COOKIE_SECURE")),
 		CookieSameSite:     cookieSameSite,

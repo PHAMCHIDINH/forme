@@ -1,35 +1,57 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
+	db "github.com/PHAMCHIDINH/forme/chidinh_api/db/sqlc"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
+var ErrOwnerNotFound = errors.New("owner not found")
+
+type OwnerStore interface {
+	GetOwnerByUsername(ctx context.Context, username string) (db.Owner, error)
+	GetOwnerByID(ctx context.Context, id string) (db.Owner, error)
+}
 
 type Service struct {
-	cfg config.Config
+	cfg    config.Config
+	owners OwnerStore
 }
 
-func NewService(cfg config.Config) *Service {
-	return &Service{cfg: cfg}
+func NewService(cfg config.Config, owners OwnerStore) *Service {
+	return &Service{
+		cfg:    cfg,
+		owners: owners,
+	}
 }
 
-func (s *Service) Login(username string, password string) (string, error) {
-	if username != s.cfg.OwnerUsername || password != s.cfg.OwnerPassword {
-		return "", ErrInvalidCredentials
+func (s *Service) Login(ctx context.Context, username string, password string) (LoginResult, error) {
+	owner, err := s.owners.GetOwnerByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return LoginResult{}, ErrInvalidCredentials
+		}
+		return LoginResult{}, fmt.Errorf("failed to load owner by username: %w", err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(owner.PasswordHash), []byte(password)); err != nil {
+		return LoginResult{}, ErrInvalidCredentials
 	}
 
 	now := time.Now()
 	claims := Claims{
-		Username: username,
+		Username: owner.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "owner",
+			Subject:   owner.ID,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(24 * time.Hour)),
 		},
@@ -38,10 +60,13 @@ func (s *Service) Login(username string, password string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(s.cfg.JWTSecret))
 	if err != nil {
-		return "", fmt.Errorf("failed to sign token: %w", err)
+		return LoginResult{}, fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return signedToken, nil
+	return LoginResult{
+		Token: signedToken,
+		User:  mapOwner(owner),
+	}, nil
 }
 
 func (s *Service) ParseToken(tokenString string) (*Claims, error) {
@@ -63,10 +88,22 @@ func (s *Service) ParseToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-func (s *Service) CurrentUser() UserResponse {
+func (s *Service) CurrentUser(ctx context.Context, ownerID string) (UserResponse, error) {
+	owner, err := s.owners.GetOwnerByID(ctx, ownerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return UserResponse{}, ErrOwnerNotFound
+		}
+		return UserResponse{}, fmt.Errorf("failed to load owner by id: %w", err)
+	}
+
+	return mapOwner(owner), nil
+}
+
+func mapOwner(owner db.Owner) UserResponse {
 	return UserResponse{
-		ID:          "owner",
-		Username:    s.cfg.OwnerUsername,
-		DisplayName: "Owner",
+		ID:          owner.ID,
+		Username:    owner.Username,
+		DisplayName: owner.DisplayName,
 	}
 }
