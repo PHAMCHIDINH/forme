@@ -1,6 +1,8 @@
 package httpserver
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,7 +11,8 @@ import (
 )
 
 func TestHealthRoute(t *testing.T) {
-	router := NewRouter(config.Config{}, nil, nil, nil)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	router := NewRouter(config.Config{}, logger, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 

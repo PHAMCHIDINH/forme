@@ -9,14 +9,19 @@ import (
 
 	apiresponse "github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/api"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/middleware"
+	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/validation"
 )
 
 type Handler struct {
-	service *Service
+	service   *Service
+	validator *validation.Validator
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, validator *validation.Validator) *Handler {
+	return &Handler{
+		service:   service,
+		validator: validator,
+	}
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +43,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "invalid JSON payload")
+		return
+	}
+	if errs := h.validator.Validate(&req); len(errs) > 0 {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", createValidationMessage(errs))
 		return
 	}
 
@@ -65,8 +74,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "invalid JSON payload")
 		return
 	}
-	if req.Title == nil && req.Completed == nil {
-		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "at least one field is required")
+	if errs := h.validator.Validate(&req); len(errs) > 0 {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", updateValidationMessage(errs))
 		return
 	}
 
@@ -105,4 +114,29 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	apiresponse.WriteJSON(w, http.StatusOK, map[string]any{
 		"success": true,
 	})
+}
+
+func createValidationMessage(errs validation.Errors) string {
+	if errs.Has("title", "required") {
+		return "title is required"
+	}
+	if errs.Has("title", "max") {
+		return "title must be at most 200 characters"
+	}
+
+	return "invalid request payload"
+}
+
+func updateValidationMessage(errs validation.Errors) string {
+	if errs.Has("update", "required") {
+		return "at least one field is required"
+	}
+	if errs.Has("title", "notblank") {
+		return "title cannot be empty"
+	}
+	if errs.Has("title", "max") {
+		return "title must be at most 200 characters"
+	}
+
+	return "invalid request payload"
 }

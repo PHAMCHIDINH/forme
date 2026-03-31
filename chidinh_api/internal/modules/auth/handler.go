@@ -9,17 +9,20 @@ import (
 
 	apiresponse "github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/api"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
+	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/validation"
 )
 
 type Handler struct {
-	cfg     config.Config
-	service *Service
+	cfg       config.Config
+	service   *Service
+	validator *validation.Validator
 }
 
-func NewHandler(cfg config.Config, service *Service) *Handler {
+func NewHandler(cfg config.Config, service *Service, validator *validation.Validator) *Handler {
 	return &Handler{
-		cfg:     cfg,
-		service: service,
+		cfg:       cfg,
+		service:   service,
+		validator: validator,
 	}
 }
 
@@ -30,10 +33,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Username = strings.TrimSpace(req.Username)
-	req.Password = strings.TrimSpace(req.Password)
-	if req.Username == "" || req.Password == "" {
-		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "username and password are required")
+	if errs := h.validator.Validate(&req); len(errs) > 0 {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", loginValidationMessage(errs))
 		return
 	}
 
@@ -116,4 +117,12 @@ func parseSameSite(value string) http.SameSite {
 	default:
 		return http.SameSiteLaxMode
 	}
+}
+
+func loginValidationMessage(errs validation.Errors) string {
+	if errs.Has("username", "required") || errs.Has("password", "required") {
+		return "username and password are required"
+	}
+
+	return "invalid request payload"
 }

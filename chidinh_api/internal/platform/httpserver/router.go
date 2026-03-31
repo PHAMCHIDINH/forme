@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,8 +12,9 @@ import (
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/middleware"
 )
 
-func NewRouter(cfg config.Config, authHandler *auth.Handler, todoHandler *todo.Handler, authMiddleware *middleware.Auth) http.Handler {
+func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler, todoHandler *todo.Handler, authMiddleware *middleware.Auth) http.Handler {
 	router := chi.NewRouter()
+	router.Use(middleware.RequestLogger(logger))
 	router.Use(middleware.CORS(cfg.CORSAllowedOrigins))
 
 	router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {

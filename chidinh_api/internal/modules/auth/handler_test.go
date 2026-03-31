@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,6 +17,7 @@ import (
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/httpserver"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/middleware"
+	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/validation"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -118,6 +121,37 @@ func TestLoginRejectsInvalidPasswordOverHTTP(t *testing.T) {
 	}
 }
 
+func TestLoginRejectsMissingCredentialsOverHTTP(t *testing.T) {
+	router := newAuthTestRouter()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(`{"username":"   ","password":"   "}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for missing credentials")
+	}
+	if resp.Error.Code != "bad_request" {
+		t.Fatalf("expected error code %q, got %q", "bad_request", resp.Error.Code)
+	}
+	if resp.Error.Message != "username and password are required" {
+		t.Fatalf("expected error message %q, got %q", "username and password are required", resp.Error.Message)
+	}
+}
+
 func newAuthTestRouter() http.Handler {
 	owner := db.Owner{
 		ID:           "owner-123",
@@ -136,11 +170,12 @@ func newAuthTestRouter() http.Handler {
 
 	cfg := config.Config{JWTSecret: "test-secret"}
 	authService := auth.NewService(cfg, store)
-	authHandler := auth.NewHandler(cfg, authService)
+	authHandler := auth.NewHandler(cfg, authService, validation.New())
 	authMiddleware := middleware.NewAuth(authService)
-	todoHandler := todo.NewHandler(todo.NewService(&todo.Repository{}))
+	todoHandler := todo.NewHandler(todo.NewService(&todo.Repository{}), validation.New())
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 
-	return httpserver.NewRouter(cfg, authHandler, todoHandler, authMiddleware)
+	return httpserver.NewRouter(cfg, logger, authHandler, todoHandler, authMiddleware)
 }
 
 type stubOwnerStore struct {

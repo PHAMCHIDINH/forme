@@ -1,18 +1,25 @@
 package main
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/app"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
+	applogger "github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/logger"
 )
 
 func main() {
 	cfg := config.Load()
+	logger := applogger.New(cfg.AppEnv)
+	slog.SetDefault(logger)
+
 	if err := cfg.Validate(); err != nil {
-		log.Fatal(err)
+		logger.Error("configuration validation failed", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
-	if err := app.Run(cfg); err != nil {
-		log.Fatal(err)
+	if err := app.Run(cfg, logger); err != nil {
+		logger.Error("api exited", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 }
