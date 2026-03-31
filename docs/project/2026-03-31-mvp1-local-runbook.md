@@ -32,15 +32,13 @@ Install or verify:
 - Go toolchain used by this repo
 - `curl`
 
-The current backend make targets use the Windows Go binary path
-`/mnt/c/Program Files/Go/bin/go.exe` when run from WSL. If your machine uses a
-different Go path, adjust the command accordingly.
+Use the `go` binary available on your `PATH`.
 
 ## 4. Environment Setup
 
 Backend environment values for local execution are captured in:
 
-- [`chidinh_api/.env.example`](/mnt/d/chidinh/.worktrees/mvp1-foundation/chidinh_api/.env.example)
+- [`chidinh_api/.env.example`](../../chidinh_api/.env.example)
 
 Recommended local values:
 
@@ -67,17 +65,17 @@ Use an explicit three-step local sequence so schema setup happens before the
 backend app starts:
 
 ```bash
-cd /mnt/d/chidinh/.worktrees/mvp1-foundation
+cd <repo-root>
 docker compose up -d db
 ```
 
 ```bash
-cd /mnt/d/chidinh/.worktrees/mvp1-foundation/chidinh_api
-"/mnt/c/Program Files/Go/bin/go.exe" run ./cmd/migrate up
+cd <repo-root>/chidinh_api
+go run ./cmd/migrate up
 ```
 
 ```bash
-cd /mnt/d/chidinh/.worktrees/mvp1-foundation
+cd <repo-root>
 docker compose up -d --build backend frontend
 ```
 
@@ -95,13 +93,13 @@ database volume only when you explicitly want a fresh local database.
 Run these before smoke testing:
 
 ```bash
-cd /mnt/d/chidinh/.worktrees/mvp1-foundation/chidinh_api
-"/mnt/c/Program Files/Go/bin/go.exe" test ./...
-"/mnt/c/Program Files/Go/bin/go.exe" build ./...
+cd <repo-root>/chidinh_api
+go test ./...
+go build ./...
 ```
 
 ```bash
-cd /mnt/d/chidinh/.worktrees/mvp1-foundation/chidinh_client
+cd <repo-root>/chidinh_client
 npm ci
 npm test
 npm run build
@@ -129,7 +127,7 @@ ITEM_ID="$(
     -H "Content-Type: application/json" \
     -d '{"title":"local smoke todo"}' \
     "$API/api/v1/todos" \
-    | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["item"]["id"])'
+    | node -e 'let input=""; process.stdin.on("data", (chunk) => input += chunk).on("end", () => { const body = JSON.parse(input); console.log(body.data.item.id); });'
 )"
 
 curl -fsS -b "$COOKIE_JAR" "$API/api/v1/todos"
