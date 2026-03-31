@@ -1,0 +1,28 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Vercel deployment
+        run: |
+          echo "Connect this job to Vercel via VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID."
+          echo "Then run: npx vercel --prod --token $VERCEL_TOKEN"
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Railway deployment
+        run: |
+          echo "Connect this job to Railway via RAILWAY_TOKEN and project/service IDs."
+          echo "Then run: railway up --service <service-name>"

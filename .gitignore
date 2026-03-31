@@ -5,9 +5,13 @@ chidinh_client/node_modules/
 chidinh_client/dist/
 chidinh_client/.vercel/
 chidinh_client/.env
+chidinh_client/*.tsbuildinfo
+chidinh_client/vite.config.js
+chidinh_client/vite.config.d.ts
 
 # backend
 chidinh_api/bin/
+chidinh_api/*.exe
 chidinh_api/.env
 
 # misc
