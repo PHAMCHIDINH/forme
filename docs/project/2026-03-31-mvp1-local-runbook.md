@@ -63,11 +63,22 @@ Frontend local API base:
 
 ## 5. Start The Stack
 
-From the repo root:
+Use an explicit three-step local sequence so schema setup happens before the
+backend app starts:
 
 ```bash
 cd /mnt/d/chidinh/.worktrees/mvp1-foundation
-docker compose up -d --build
+docker compose up -d db
+```
+
+```bash
+cd /mnt/d/chidinh/.worktrees/mvp1-foundation/chidinh_api
+"/mnt/c/Program Files/Go/bin/go.exe" run ./cmd/migrate up
+```
+
+```bash
+cd /mnt/d/chidinh/.worktrees/mvp1-foundation
+docker compose up -d --build backend frontend
 ```
 
 This starts:
@@ -113,7 +124,7 @@ curl -i -c "$COOKIE_JAR" \
 
 curl -fsS -b "$COOKIE_JAR" "$API/api/v1/auth/me"
 
-TODO_ID="$(
+ITEM_ID="$(
   curl -fsS -b "$COOKIE_JAR" \
     -H "Content-Type: application/json" \
     -d '{"title":"local smoke todo"}' \
@@ -127,11 +138,11 @@ curl -fsS -b "$COOKIE_JAR" \
   -H "Content-Type: application/json" \
   -X PATCH \
   -d '{"completed":true}' \
-  "$API/api/v1/todos/$TODO_ID"
+  "$API/api/v1/todos/$ITEM_ID"
 
 curl -fsS -b "$COOKIE_JAR" \
   -X DELETE \
-  "$API/api/v1/todos/$TODO_ID"
+  "$API/api/v1/todos/$ITEM_ID"
 
 curl -fsS -b "$COOKIE_JAR" -c "$COOKIE_JAR" -X POST "$API/api/v1/auth/logout"
 
