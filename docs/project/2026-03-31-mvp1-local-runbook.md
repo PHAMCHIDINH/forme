@@ -32,7 +32,14 @@ Install or verify:
 - Go toolchain used by this repo
 - `curl`
 
-Use the `go` binary available on your `PATH`.
+Set the Go command once before running the Go-based steps:
+
+```bash
+GO_BIN="${GO_BIN:-go}"
+```
+
+If `go` is not on your `PATH`, set `GO_BIN` to the absolute path of your Go
+binary before running the commands below.
 
 ## 4. Environment Setup
 
@@ -71,7 +78,7 @@ docker compose up -d db
 
 ```bash
 cd <repo-root>/chidinh_api
-go run ./cmd/migrate up
+"$GO_BIN" run ./cmd/migrate up
 ```
 
 ```bash
@@ -94,8 +101,8 @@ Run these before smoke testing:
 
 ```bash
 cd <repo-root>/chidinh_api
-go test ./...
-go build ./...
+"$GO_BIN" test ./...
+"$GO_BIN" build ./...
 ```
 
 ```bash
