@@ -1,15 +1,18 @@
-GO ?= go
+GO ?= /mnt/c/Program\ Files/Go/bin/go.exe
 MIGRATE_ARGS ?= up
 
-.PHONY: migrate migrate-status run test build
+.PHONY: migrate migrate-up migrate-status run test build
 
 migrate:
 	$(GO) run ./cmd/migrate $(MIGRATE_ARGS)
 
+migrate-up:
+	$(GO) run ./cmd/migrate up
+
 migrate-status:
 	$(GO) run ./cmd/migrate status
 
-run:
+run: migrate-up
 	$(GO) run ./cmd/api
 
 test:
