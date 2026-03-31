@@ -18,6 +18,6 @@ describe("RequireAuth", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: /sign in/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /enter workspace/i })).toBeInTheDocument();
   });
 });
