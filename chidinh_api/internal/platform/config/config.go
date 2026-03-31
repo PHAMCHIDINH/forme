@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -28,16 +29,6 @@ func Load() Config {
 		appEnv = "development"
 	}
 
-	ownerUsername := os.Getenv("OWNER_USERNAME")
-	if ownerUsername == "" {
-		ownerUsername = "owner"
-	}
-
-	ownerPasswordHash := os.Getenv("OWNER_PASSWORD_HASH")
-	if ownerPasswordHash == "" {
-		ownerPasswordHash = "$2b$12$Ql1OEDm9gTzCvIPdp2AvJ.8zYe6c7kwEZKtbG8ybULk8OyLT5DCWC"
-	}
-
 	cookieSameSite := os.Getenv("COOKIE_SAME_SITE")
 	if cookieSameSite == "" {
 		cookieSameSite = "Lax"
@@ -48,11 +39,26 @@ func Load() Config {
 		AppEnv:             appEnv,
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
-		OwnerUsername:      ownerUsername,
-		OwnerPasswordHash:  ownerPasswordHash,
+		OwnerUsername:      os.Getenv("OWNER_USERNAME"),
+		OwnerPasswordHash:  os.Getenv("OWNER_PASSWORD_HASH"),
 		CORSAllowedOrigins: parseCSVEnv("CORS_ALLOWED_ORIGINS"),
 		CookieSecure:       parseBool(os.Getenv("COOKIE_SECURE")),
 		CookieSameSite:     cookieSameSite,
+	}
+}
+
+func (c Config) Validate() error {
+	switch {
+	case strings.TrimSpace(c.DatabaseURL) == "":
+		return fmt.Errorf("DATABASE_URL is required")
+	case strings.TrimSpace(c.JWTSecret) == "":
+		return fmt.Errorf("JWT_SECRET is required")
+	case strings.TrimSpace(c.OwnerUsername) == "":
+		return fmt.Errorf("OWNER_USERNAME is required")
+	case strings.TrimSpace(c.OwnerPasswordHash) == "":
+		return fmt.Errorf("OWNER_PASSWORD_HASH is required")
+	default:
+		return nil
 	}
 }
 

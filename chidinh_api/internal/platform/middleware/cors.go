@@ -9,7 +9,8 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
-			if origin != "" && (len(allowedOrigins) == 0 || slices.Contains(allowedOrigins, origin)) {
+			allowed := origin != "" && slices.Contains(allowedOrigins, origin)
+			if allowed {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
@@ -18,6 +19,12 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 			}
 
 			if r.Method == http.MethodOptions {
+				if !allowed {
+					w.Header().Del("Access-Control-Allow-Origin")
+					w.Header().Del("Access-Control-Allow-Credentials")
+					w.Header().Del("Access-Control-Allow-Methods")
+					w.Header().Del("Access-Control-Allow-Headers")
+				}
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
