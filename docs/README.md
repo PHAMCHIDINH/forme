@@ -15,6 +15,8 @@ the Personal Digital Hub.
   Consolidated recommended technology stack for MVP 1.
 - `deployment/2026-03-31-mvp1-deploy-runbook.md`
   Environment setup and deployment runbook for Vercel and Railway.
+- `project/2026-03-31-mvp1-local-runbook.md`
+  Local-first execution runbook, build/test commands, and smoke checklist.
 - `project/2026-03-31-mvp1-delivery-plan.md`
   Recommended implementation phases, milestones, and release checklist.
 - `superpowers/plans/2026-03-31-personal-digital-hub-mvp1.md`

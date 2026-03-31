@@ -23,11 +23,13 @@ Deliverables:
 - backend scaffold with health endpoint
 - shared environment configuration strategy
 - local run commands documented
+- local-first runbook and smoke checklist published
 
 Exit criteria:
 
 - both apps boot locally
 - frontend can reach backend health endpoint
+- local runbook smoke checklist passes on the same machine
 
 ### Milestone 2: Public Portfolio
 
@@ -133,6 +135,7 @@ Before moving to the next milestone, verify:
 - local flows run successfully
 - documentation stays aligned with implementation
 - environment variables are recorded in `.env.example`
+- local-first smoke checks are documented and repeatable without any deploy
 
 ## 8. Final MVP 1 Release Checklist
 
