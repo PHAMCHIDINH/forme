@@ -19,6 +19,49 @@ function renderTodoRoute() {
 }
 
 describe("TodoPage", () => {
+  it("shows an empty state when there are no todos", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({ items: [] }),
+    );
+
+    renderTodoRoute();
+
+    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
+    expect(await screen.findByText(/no active tasks yet/i)).toBeInTheDocument();
+    expect(screen.getByText("0 total")).toBeInTheDocument();
+  });
+
+  it("shows summary metrics for the loaded list", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({
+        items: [
+          {
+            id: "todo-1",
+            title: "Ship the first release",
+            completed: false,
+            createdAt: "2026-03-31T00:00:00.000Z",
+            updatedAt: "2026-03-31T00:00:00.000Z",
+          },
+          {
+            id: "todo-2",
+            title: "Archive release notes",
+            completed: true,
+            createdAt: "2026-03-31T00:00:00.000Z",
+            updatedAt: "2026-03-31T00:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    renderTodoRoute();
+
+    expect(await screen.findByText(/2 total/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 open/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 complete/i)).toBeInTheDocument();
+  });
+
   it("renders the todo list", async () => {
     mockFetchSequence(
       jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
@@ -37,7 +80,7 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByRole("heading", { name: /todo/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
     expect(await screen.findByText("Ship the first release")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Ship the first release" })).not.toBeChecked();
   });
@@ -71,7 +114,7 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    await screen.findByRole("heading", { name: /todo/i });
+    await screen.findByRole("heading", { name: /todo operations/i });
 
     await user.type(screen.getByLabelText(/task title/i), "Write frontend tests");
     await user.click(screen.getByRole("button", { name: /add task/i }));
