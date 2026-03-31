@@ -28,7 +28,7 @@ func Run(cfg config.Config) error {
 	}
 	defer pool.Close()
 
-	if err := database.EnsureSchema(ctx, pool); err != nil {
+	if err := database.SeedLocalOwner(ctx, database.NewOwnerSeedStore(pool), cfg); err != nil {
 		return err
 	}
 

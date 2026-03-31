@@ -1,3 +1,5 @@
+-- +goose Up
+
 CREATE TABLE IF NOT EXISTS owners (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
