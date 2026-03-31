@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-base: #f5f1ea;
+  --color-surface: #fffdfa;
+  --color-surface-alt: #ebe5da;
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-accent: #365f63;
+  --color-border: rgba(31, 41, 51, 0.12);
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply m-0 bg-base font-sans text-text antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(54, 95, 99, 0.08), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 253, 250, 0.92));
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  input {
+    @apply w-full rounded-2xl border border-border bg-white px-4 py-3 text-text outline-none transition;
+  }
+
+  input:focus {
+    @apply border-accent ring-2 ring-accent/15;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}

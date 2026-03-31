@@ -11,6 +11,6 @@ describe("App routes", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: /selected projects/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /selected systems/i })).toBeInTheDocument();
   });
 });

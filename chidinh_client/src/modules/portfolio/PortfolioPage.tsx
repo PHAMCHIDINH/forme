@@ -1,35 +1,109 @@
-import { Link } from "react-router-dom";
-
+import { Button } from "../../shared/ui/Button";
+import { Panel } from "../../shared/ui/Panel";
+import { SectionHeading } from "../../shared/ui/SectionHeading";
 import { portfolioData } from "./data";
 
 export function PortfolioPage() {
   return (
-    <main>
-      <header>
-        <p>{portfolioData.displayName}</p>
-        <h1>Personal Digital Hub</h1>
-        <h2>{portfolioData.title}</h2>
-        <p>{portfolioData.intro}</p>
-      </header>
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-8 lg:px-10 lg:py-10">
+      <Panel className="overflow-hidden px-6 py-8 lg:px-10 lg:py-12">
+        <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
+          <div className="space-y-6">
+            <p className="text-sm uppercase tracking-[0.24em] text-accent">
+              {portfolioData.displayName}
+            </p>
+            <h1 className="max-w-3xl font-display text-5xl leading-tight text-text">
+              Personal Digital Hub
+            </h1>
+            <p className="max-w-2xl text-lg leading-8 text-muted">{portfolioData.intro}</p>
+            <div className="flex flex-wrap gap-3">
+              <Button to="/#systems">Explore Systems</Button>
+              <Button to="/login" variant="secondary">
+                Enter Workspace
+              </Button>
+            </div>
+          </div>
 
-      <section>
-        <h2>Selected Projects</h2>
-        <ul>
-          {portfolioData.projects.map((project) => (
-            <li key={project.name}>
-              <h3>{project.name}</h3>
-              <p>{project.summary}</p>
-            </li>
+          <Panel className="bg-surfaceAlt p-6">
+            <p className="text-sm text-muted">Role</p>
+            <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
+            <p className="mt-4 text-sm leading-7 text-muted">
+              Building integrated digital systems with modular interfaces, stable APIs, and
+              production-ready workflows.
+            </p>
+          </Panel>
+        </div>
+      </Panel>
+
+      <section className="space-y-6">
+        <SectionHeading
+          eyebrow="Framework"
+          title="Operating Principles"
+          description="A calm system only scales when the boundaries, rituals, and interfaces stay clear."
+        />
+        <div className="grid gap-4 lg:grid-cols-3">
+          {portfolioData.principles.map((principle) => (
+            <Panel className="p-6" key={principle.title}>
+              <h3 className="font-display text-2xl text-text">{principle.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted">{principle.description}</p>
+            </Panel>
           ))}
-        </ul>
+        </div>
       </section>
 
-      <footer>
+      <section id="systems" className="space-y-6">
+        <SectionHeading
+          eyebrow="Portfolio"
+          title="Selected Systems"
+          description="Project highlights framed as operational systems instead of static case studies."
+        />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {portfolioData.projects.map((project) => (
+            <Panel className="p-6" key={project.name}>
+              <p className="text-xs uppercase tracking-[0.24em] text-accent">{project.domain}</p>
+              <h3 className="mt-3 font-display text-2xl text-text">{project.name}</h3>
+              <p className="mt-4 text-sm leading-7 text-muted">{project.summary}</p>
+            </Panel>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <SectionHeading
+          eyebrow="Hub"
+          title="Live Capabilities"
+          description="Current and near-future modules that define the product as a living digital workspace."
+        />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {portfolioData.capabilities.map((capability) => (
+            <Panel className="p-5" key={capability.name}>
+              <p className="text-sm text-muted">{capability.status}</p>
+              <p className="mt-3 text-lg text-text">{capability.name}</p>
+            </Panel>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <SectionHeading
+          eyebrow="Architecture"
+          title="Architecture Signal"
+          description="A focused view into the technical decisions that shape the system."
+        />
+        <div className="flex flex-wrap gap-3">
+          {portfolioData.architectureSignals.map((signal) => (
+            <Panel className="px-4 py-3" key={signal}>
+              <p className="text-sm text-text">{signal}</p>
+            </Panel>
+          ))}
+        </div>
+      </section>
+
+      <footer className="flex flex-wrap items-center gap-4 border-t border-border py-6 text-sm text-muted">
         <a href={portfolioData.githubUrl} target="_blank" rel="noreferrer">
           GitHub
         </a>
         <a href={`mailto:${portfolioData.contactEmail}`}>Contact</a>
-        <Link to="/login">Owner Login</Link>
       </footer>
     </main>
   );
