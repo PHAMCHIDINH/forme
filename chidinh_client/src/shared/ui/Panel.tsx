@@ -5,11 +5,5 @@ type Props = PropsWithChildren<{
 }>;
 
 export function Panel({ children, className = "" }: Props) {
-  return (
-    <div
-      className={`rounded-[28px] border border-border bg-surface shadow-panel ${className}`.trim()}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`desktop-panel ${className}`.trim()}>{children}</div>;
 }
