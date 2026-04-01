@@ -3,13 +3,71 @@
 @tailwind utilities;
 
 :root {
-  --color-base: #f5f1ea;
-  --color-surface: #fffdfa;
-  --color-surface-alt: #ebe5da;
-  --color-text: #1f2933;
-  --color-muted: #52606d;
-  --color-accent: #365f63;
-  --color-border: rgba(31, 41, 51, 0.12);
+  --background: #f5f1ea;
+  --foreground: #1f2933;
+  --card: #fffdfa;
+  --card-foreground: #1f2933;
+  --popover: #fffdfa;
+  --popover-foreground: #1f2933;
+  --primary: #365f63;
+  --primary-foreground: #fffdfa;
+  --secondary: #ebe5da;
+  --secondary-foreground: #1f2933;
+  --muted: #52606d;
+  --muted-foreground: #52606d;
+  --accent: #365f63;
+  --accent-foreground: #fffdfa;
+  --destructive: #9b4a4a;
+  --destructive-foreground: #fffdfa;
+  --border: rgba(31, 41, 51, 0.12);
+  --input: rgba(31, 41, 51, 0.12);
+  --ring: rgba(54, 95, 99, 0.45);
+
+  /* Legacy aliases kept for the older utility names still used in the app. */
+  --color-base: var(--background);
+  --color-surface: var(--card);
+  --color-surface-alt: var(--secondary);
+  --color-text: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+}
+
+@theme {
+  --font-head: "Georgia", Cambria, "Times New Roman", serif;
+  --font-display: "Georgia", Cambria, "Times New Roman", serif;
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Legacy utility aliases used by the current app shell. */
+  --color-base: var(--background);
+  --color-surface: var(--card);
+  --color-surfaceAlt: var(--secondary);
+  --color-text: var(--foreground);
+  --color-surface-alt: var(--secondary);
 }
 
 @layer base {
@@ -23,8 +81,8 @@
 
   body {
     margin: 0;
-    background-color: var(--color-base);
-    color: var(--color-text);
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: "Segoe UI", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -45,17 +103,17 @@
 
   input {
     width: 100%;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border);
     border-radius: 1rem;
     background: #fff;
-    color: var(--color-text);
+    color: var(--foreground);
     padding: 0.75rem 1rem;
     outline: none;
     transition: border-color 160ms ease, box-shadow 160ms ease;
   }
 
   input:focus {
-    border-color: var(--color-accent);
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(54, 95, 99, 0.15);
   }
 
