@@ -1,17 +1,23 @@
-export type PortfolioPrinciple = {
-  title: string;
-  description: string;
+export type PortfolioDockItem = {
+  label: string;
+  to: string;
+  end?: boolean;
 };
 
-export type PortfolioProject = {
-  name: string;
-  domain: string;
+export type DesktopWindowCopy = {
+  title: string;
+  subtitle: string;
+};
+
+export type ArchiveCard = {
+  title: string;
   summary: string;
 };
 
-export type PortfolioCapability = {
+export type RegistryCard = {
   name: string;
-  status: "Live" | "Planned" | "Evolving";
+  status: string;
+  summary: string;
 };
 
 export type PortfolioData = {
@@ -20,58 +26,95 @@ export type PortfolioData = {
   intro: string;
   githubUrl: string;
   contactEmail: string;
-  principles: PortfolioPrinciple[];
-  projects: PortfolioProject[];
-  capabilities: PortfolioCapability[];
+  desktopIndicators: string[];
+  dockItems: PortfolioDockItem[];
+  windows: {
+    identity: DesktopWindowCopy;
+    archive: DesktopWindowCopy;
+    operatingModel: DesktopWindowCopy;
+    registry: DesktopWindowCopy;
+    notes: DesktopWindowCopy;
+  };
+  principles: string[];
+  archiveCards: ArchiveCard[];
+  registryCards: RegistryCard[];
   architectureSignals: string[];
 };
 
 export const portfolioData: PortfolioData = {
   displayName: "Pham Chi Dinh",
-  title: "System Architect and Personal Digital Hub Builder",
+  title: "System Architect",
   intro:
-    "I design practical digital systems with modular architecture, calm operational surfaces, and resilient delivery workflows.",
+    "A curated desktop scene for system design, active modules, and architecture artifacts that feel alive rather than archived.",
   githubUrl: "https://github.com/PHAMCHIDINH",
   contactEmail: "contact@example.com",
+  desktopIndicators: ["Public Desktop", "Live Modules", "Warm macOS"],
+  dockItems: [
+    { label: "Portfolio", to: "/", end: true },
+    { label: "Systems", to: "/#archive" },
+    { label: "Workspace", to: "/login" },
+    { label: "Contact", to: "/#contact" },
+  ],
+  windows: {
+    identity: {
+      title: "About / Identity",
+      subtitle: "Curated desktop scene",
+    },
+    archive: {
+      title: "System Archive",
+      subtitle: "Selected systems and dossiers",
+    },
+    operatingModel: {
+      title: "Operating Model",
+      subtitle: "Principles behind the machine",
+    },
+    registry: {
+      title: "Module Registry",
+      subtitle: "Live and near-future modules",
+    },
+    notes: {
+      title: "Architecture Notes",
+      subtitle: "Signals from the technical stack",
+    },
+  },
   principles: [
+    "Modular boundaries over sprawling complexity.",
+    "Interfaces should feel calm even when systems are dense.",
+    "Products should expose structure instead of hiding it behind generic templates.",
+  ],
+  archiveCards: [
     {
-      title: "System Thinking",
-      description: "Shape tools as connected systems instead of isolated screens or one-off utilities.",
+      title: "AI Service Hub",
+      summary:
+        "Operational tooling framed as a modular service environment with reusable assistant workflows.",
     },
     {
-      title: "Modular Integration",
-      description: "Keep interfaces composable so new modules can enter the hub without destabilizing it.",
-    },
-    {
-      title: "Operational Clarity",
-      description: "Use calm hierarchy and explicit states so the product stays understandable under growth.",
+      title: "Marketplace Systems",
+      summary:
+        "Commerce architecture documented as a living system with integration boundaries and delivery artifacts.",
     },
   ],
-  projects: [
+  registryCards: [
     {
-      name: "AI Service Hub",
-      domain: "Internal Tooling",
-      summary:
-        "A modular platform for AI-powered operations with clean service boundaries and reusable workflows.",
+      name: "Todo.app",
+      status: "Live",
+      summary: "The first active application inside the private workspace.",
     },
     {
-      name: "E-commerce Marketplace",
-      domain: "Digital Commerce",
-      summary:
-        "A marketplace architecture focused on extensible product modules and operational reliability.",
+      name: "Files",
+      status: "Registered",
+      summary: "Reserved for future asset and reference storage inside the machine.",
     },
-  ],
-  capabilities: [
-    { name: "Todo", status: "Live" },
-    { name: "File Manager", status: "Planned" },
-    { name: "Knowledge Base", status: "Planned" },
-    { name: "Automation", status: "Evolving" },
+    {
+      name: "Automation",
+      status: "Registered",
+      summary: "Planned space for recurring workflows and assistant actions.",
+    },
   ],
   architectureSignals: [
     "API Design",
-    "Deployment Workflow",
     "Secure Access",
     "Data Modeling",
-    "Modular Boundaries",
+    "Deployment Workflow",
   ],
 };
