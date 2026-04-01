@@ -6,7 +6,7 @@ import { AppRoutes } from "../app/router/AppRouter";
 import { createTestQueryClient, jsonResponse, mockFetchSequence } from "./test-utils";
 
 describe("DashboardLayout", () => {
-  it("renders the private desktop shell with launcher and user context", async () => {
+  it("renders the private shell with context and navigation", async () => {
     mockFetchSequence(jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }));
 
     const queryClient = createTestQueryClient();
@@ -19,9 +19,9 @@ describe("DashboardLayout", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("heading", { level: 2, name: /tổng quan không gian làm việc/i })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: /điều hướng workspace ide/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /công việc/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /người dùng ada lovelace/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /workspace overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /dashboard navigation/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /public hub/i })).toBeInTheDocument();
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   });
 });

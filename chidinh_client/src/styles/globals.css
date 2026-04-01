@@ -1,110 +1,36 @@
-@import "tailwindcss";
-
-@theme {
-  --font-head: 'Archivo Black', sans-serif;
-  --font-sans: 'Space Grotesk', sans-serif;
-  --radius: 0;
-
-  --shadow-xs: 1px 1px 0 0 var(--border);
-  --shadow-sm: 2px 2px 0 0 var(--border);
-  --shadow: 4px 4px 0 0 var(--border);
-  --shadow-md: 6px 6px 0 0 var(--border);
-  --shadow-lg: 8px 8px 0 0 var(--border);
-  --shadow-xl: 12px 12px 0 1px var(--border);
-  --shadow-2xl: 16px 16px 0 2px var(--border);
-
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-primary-hover: var(--primary-hover);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --radius: 0.5rem;
-  --background: #F9F5F2;
-  --foreground: #000000;
-  --muted: #EDE3FF;
-  --muted-foreground: #5B3B98;
-  --card: #FFFFFF;
-  --card-foreground: #000000;
-  --popover: #FFFFFF;
-  --popover-foreground: #000000;
-  --border: #000000;
-  --input: #FFFFFF;
-  --primary: #C4A1FF;
-  --primary-hover: #9678FF;
-  --primary-foreground: #000000;
-  --secondary: #E7F193;
-  --secondary-foreground: #000000;
-  --accent: #FE91E9;
-  --accent-foreground: #000000;
-  --destructive: #FE3B3B;
-  --destructive-foreground: #FFFFFF;
-  --ring: #000000;
+  --color-base: #f5f1ea;
+  --color-surface: #fffdfa;
+  --color-surface-alt: #ebe5da;
+  --color-text: #1f2933;
+  --color-muted: #52606d;
+  --color-accent: #365f63;
+  --color-border: rgba(31, 41, 51, 0.12);
 }
-
-.dark {
-  --background: #121014;
-  --foreground: #f5f5f5;
-  --muted: #2d2440;
-  --muted-foreground: #c7b6f3;
-  --card: #1a1820;
-  --card-foreground: #ffffff;
-  --popover: #1a1820;
-  --popover-foreground: #ffffff;
-  --border: #2a2a2e;
-  --input: #2a2a2e;
-  --primary: #C4A1FF;
-  --primary-hover: #9678FF;
-  --primary-foreground: #000000;
-  --secondary: #E7F193;
-  --secondary-foreground: #000000;
-  --accent: #FE91E9;
-  --accent-foreground: #000000;
-  --destructive: #FE3B3B;
-  --destructive-foreground: #ffffff;
-  --ring: #C4A1FF;
-}
-
-
 
 @layer base {
   * {
     box-sizing: border-box;
-    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     margin: 0;
-    font-family: var(--font-sans);
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    line-height: 1.5;
+    background-color: var(--color-base);
+    color: var(--color-text);
+    font-family: "Segoe UI", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: var(--font-head);
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: -0.02em;
+    -moz-osx-font-smoothing: grayscale;
+    background-image:
+      radial-gradient(circle at top left, rgba(54, 95, 99, 0.08), transparent 35%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 253, 250, 0.92));
   }
 
   a {
@@ -112,35 +38,28 @@
     text-decoration: none;
   }
 
-  /* Form elements brutalism default */
-  input,
-  textarea {
-    font-family: var(--font-sans);
-    border: 2px solid var(--border);
-    background-color: var(--card);
-    color: var(--card-foreground);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
+  button,
+  input {
+    font: inherit;
+  }
+
+  input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: #fff;
+    color: var(--color-text);
+    padding: 0.75rem 1rem;
     outline: none;
-    box-shadow: var(--shadow-sm);
-    transition: all 150ms ease;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
   }
 
-  input:focus,
-  textarea:focus {
-    transform: translate(-1px, -1px);
-    box-shadow: var(--shadow);
-    border-color: var(--primary);
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: var(--muted-foreground);
-    opacity: 0.7;
+  input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(54, 95, 99, 0.15);
   }
 
   button {
-    font-family: var(--font-head);
-    text-transform: uppercase;
+    cursor: pointer;
   }
 }

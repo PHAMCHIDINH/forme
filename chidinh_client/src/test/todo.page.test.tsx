@@ -18,10 +18,6 @@ function renderTodoRoute() {
   );
 }
 
-function hasTextContent(text: string) {
-  return (_: string, element: Element | null) => element?.textContent?.replace(/\s+/g, " ").trim() === text;
-}
-
 describe("TodoPage", () => {
   it("shows an empty state when there are no todos", async () => {
     mockFetchSequence(
@@ -31,10 +27,9 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByRole("heading", { level: 2, name: /quản trị tác vụ/i })).toBeInTheDocument();
-    expect(screen.getByText(/tạo tác vụ mới/i)).toBeInTheDocument();
-    expect(await screen.findByText(/chưa có tác vụ nào/i)).toBeInTheDocument();
-    expect(screen.getByText(hasTextContent("0 TỔNG KHỐI LƯỢNG"))).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
+    expect(await screen.findByText(/no active tasks yet/i)).toBeInTheDocument();
+    expect(screen.getByText("0 total")).toBeInTheDocument();
   });
 
   it("shows summary metrics for the loaded list", async () => {
@@ -62,9 +57,9 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByText(hasTextContent("2 TỔNG KHỐI LƯỢNG"))).toBeInTheDocument();
-    expect(screen.getByText(hasTextContent("1 CHƯA XONG"))).toBeInTheDocument();
-    expect(screen.getByText(hasTextContent("1 HOÀN TẤT"))).toBeInTheDocument();
+    expect(await screen.findByText(/2 total/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 open/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 complete/i)).toBeInTheDocument();
   });
 
   it("renders the todo list", async () => {
@@ -85,7 +80,7 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByRole("heading", { level: 2, name: /quản trị tác vụ/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
     expect(await screen.findByText("Ship the first release")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Ship the first release" })).not.toBeChecked();
   });
@@ -119,10 +114,10 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    await screen.findByRole("heading", { level: 2, name: /quản trị tác vụ/i });
+    await screen.findByRole("heading", { name: /todo operations/i });
 
-    await user.type(screen.getByLabelText(/tiêu đề công việc/i), "Write frontend tests");
-    await user.click(screen.getByRole("button", { name: /thêm công việc/i }));
+    await user.type(screen.getByLabelText(/task title/i), "Write frontend tests");
+    await user.click(screen.getByRole("button", { name: /add task/i }));
 
     await screen.findByText("Write frontend tests");
 
@@ -202,7 +197,7 @@ describe("TodoPage", () => {
     renderTodoRoute();
 
     await screen.findByText("Draft release checklist");
-    await user.click(screen.getByRole("button", { name: /xóa công việc draft release checklist/i }));
+    await user.click(screen.getByRole("button", { name: /delete/i }));
 
     await waitFor(() => expect(screen.queryByText("Draft release checklist")).not.toBeInTheDocument());
 
