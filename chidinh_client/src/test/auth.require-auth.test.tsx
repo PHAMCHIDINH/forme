@@ -6,7 +6,7 @@ import { AppRoutes } from "../app/router/AppRouter";
 import { createTestQueryClient, jsonResponse, mockFetchSequence } from "./test-utils";
 
 describe("RequireAuth", () => {
-  it("redirects unauthenticated users to the login page", async () => {
+  it("redirects unauthenticated users to the login access window", async () => {
     mockFetchSequence(jsonResponse({ user: null }));
     const queryClient = createTestQueryClient();
 
@@ -18,6 +18,8 @@ describe("RequireAuth", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: /enter workspace/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/workspace access/i, { selector: ".system-bar__context" }),
+    ).toBeInTheDocument();
   });
 });
