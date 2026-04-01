@@ -6,32 +6,32 @@ export function DashboardHomePage() {
     <section className="space-y-6">
       <SectionHeading
         eyebrow="Workspace"
-        title="Workspace Overview"
-        description="A focused operating surface for the tools that power the personal digital hub."
+        title="Private Workspace"
+        description="A calmer desktop surface for live modules, operational notes, and upcoming tools."
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Live Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Todo</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Track current execution items and short-term delivery tasks.
+        <Panel>
+          <p className="text-sm text-muted">Live App</p>
+          <h3 className="mt-3 text-xl font-semibold text-text">Todo</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Capture and complete active execution items.
           </p>
         </Panel>
 
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Planned Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Files</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Reserve space for asset organization and operational references.
+        <Panel>
+          <p className="text-sm text-muted">Registered</p>
+          <h3 className="mt-3 text-xl font-semibold text-text">Files</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Reserved for future asset and reference storage.
           </p>
         </Panel>
 
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Planned Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Automation</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Prepare the shell for recurring workflows and assistant-driven tasks.
+        <Panel>
+          <p className="text-sm text-muted">Registered</p>
+          <h3 className="mt-3 text-xl font-semibold text-text">Automation</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Reserved for recurring workflows and assistant actions.
           </p>
         </Panel>
       </div>

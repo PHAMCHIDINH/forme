@@ -6,7 +6,7 @@ import { AppRoutes } from "../app/router/AppRouter";
 import { createTestQueryClient, jsonResponse, mockFetchSequence } from "./test-utils";
 
 describe("DashboardLayout", () => {
-  it("renders the private shell with context and navigation", async () => {
+  it("renders the private desktop shell with launcher and user context", async () => {
     mockFetchSequence(jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }));
 
     const queryClient = createTestQueryClient();
@@ -19,9 +19,11 @@ describe("DashboardLayout", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: /workspace overview/i })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: /dashboard navigation/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /public hub/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/private workspace/i, { selector: ".system-bar__context" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /workspace launcher/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /todo/i })).toBeInTheDocument();
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
   });
 });

@@ -2,7 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
-import { Panel } from "../../shared/ui/Panel";
+import { SystemBar } from "../../shared/ui/SystemBar";
+import { WindowFrame } from "../../shared/ui/WindowFrame";
 import { loginSchema, type LoginFormValues } from "./loginSchema";
 import { useLogin } from "./useSession";
 
@@ -25,29 +26,25 @@ export function LoginPage() {
     try {
       await loginMutation.mutateAsync(values);
       navigate("/app");
-    } catch (error) {
+    } catch {
       // Error is rendered from mutation state below.
     }
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 lg:px-10">
-      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <Panel className="p-8 lg:p-10">
-          <p className="text-sm uppercase tracking-[0.24em] text-accent">Private Hub</p>
-          <h1 className="mt-4 font-display text-4xl text-text">Enter Workspace</h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-muted">
-            Sign in to access the operational side of the hub and manage active workflows.
-          </p>
-          <Link
-            className="mt-6 inline-flex text-sm text-accent underline-offset-4 hover:underline"
-            to="/"
-          >
-            Back to Public Hub
-          </Link>
-        </Panel>
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-4 lg:px-6 lg:py-6">
+      <SystemBar
+        productLabel="Personal Digital Hub"
+        contextLabel="Workspace Access"
+        indicators={["Private System", "Warm macOS"]}
+      />
 
-        <Panel className="p-8 lg:p-10">
+      <div className="flex flex-1 items-center justify-center">
+        <WindowFrame
+          title="Workspace Access"
+          subtitle="Bridge into the private machine"
+          className="w-full max-w-2xl"
+        >
           <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <label htmlFor="username">Username</label>
@@ -75,14 +72,21 @@ export function LoginPage() {
             ) : null}
 
             <button
-              className="inline-flex w-full items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+              className="desktop-submit inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70"
               type="submit"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Opening Workspace..." : "Enter Workspace"}
             </button>
+
+            <Link
+              className="inline-flex text-sm text-muted underline-offset-4 hover:underline"
+              to="/"
+            >
+              Back to Public Desktop
+            </Link>
           </form>
-        </Panel>
+        </WindowFrame>
       </div>
     </main>
   );
