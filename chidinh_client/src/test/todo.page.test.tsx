@@ -27,7 +27,8 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /todo app/i })).toBeInTheDocument();
+    expect(screen.getByText(/task composer/i)).toBeInTheDocument();
     expect(await screen.findByText(/no active tasks yet/i)).toBeInTheDocument();
     expect(screen.getByText("0 total")).toBeInTheDocument();
   });
@@ -80,7 +81,7 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /todo app/i })).toBeInTheDocument();
     expect(await screen.findByText("Ship the first release")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Ship the first release" })).not.toBeChecked();
   });
@@ -114,7 +115,7 @@ describe("TodoPage", () => {
 
     renderTodoRoute();
 
-    await screen.findByRole("heading", { name: /todo operations/i });
+    await screen.findByRole("heading", { name: /todo app/i });
 
     await user.type(screen.getByLabelText(/task title/i), "Write frontend tests");
     await user.click(screen.getByRole("button", { name: /add task/i }));

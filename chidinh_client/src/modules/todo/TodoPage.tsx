@@ -66,7 +66,7 @@ export function TodoPage() {
   const handleCreate = async ({ title }: TodoFormValues) => {
     try {
       await createMutation.mutateAsync(title);
-    } catch (error) {
+    } catch {
       // Error is rendered from mutation state.
     }
   };
@@ -74,41 +74,48 @@ export function TodoPage() {
   return (
     <section className="space-y-6">
       <SectionHeading
-        eyebrow="Operations"
-        title="Todo Operations"
-        description="Track active execution tasks inside the private workspace."
+        eyebrow="Application"
+        title="Todo App"
+        description="The first live productivity application inside the private desktop."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Panel className="p-5">
+        <Panel>
           <p className="text-sm text-muted">Tasks</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.total} total</p>
+          <p className="mt-3 text-2xl font-semibold text-text">{metrics.total} total</p>
         </Panel>
-        <Panel className="p-5">
+        <Panel>
           <p className="text-sm text-muted">Open</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.open} open</p>
+          <p className="mt-3 text-2xl font-semibold text-text">{metrics.open} open</p>
         </Panel>
-        <Panel className="p-5">
+        <Panel>
           <p className="text-sm text-muted">Completed</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.completed} complete</p>
+          <p className="mt-3 text-2xl font-semibold text-text">{metrics.completed} complete</p>
         </Panel>
       </div>
 
-      <Panel className="p-6">
-        <form className="flex flex-col gap-3 md:flex-row md:items-end" onSubmit={form.handleSubmit(handleCreate)}>
+      <Panel className="space-y-4">
+        <div>
+          <p className="text-sm font-medium text-text">Task Composer</p>
+          <p className="mt-1 text-sm text-muted">
+            Add the next execution item without leaving the app window.
+          </p>
+        </div>
+
+        <form
+          className="flex flex-col gap-3 md:flex-row md:items-end"
+          onSubmit={form.handleSubmit(handleCreate)}
+        >
           <div className="flex-1 space-y-2">
             <label htmlFor="todo-title">Task Title</label>
-            <input
-              id="todo-title"
-              placeholder="Add a new task"
-              {...form.register("title")}
-            />
+            <input id="todo-title" placeholder="Add a new task" {...form.register("title")} />
             {form.formState.errors.title ? (
               <p className="text-sm text-red-700">{form.formState.errors.title.message}</p>
             ) : null}
           </div>
+
           <button
-            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="desktop-submit inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
             type="submit"
             disabled={createMutation.isPending}
           >
@@ -118,20 +125,20 @@ export function TodoPage() {
       </Panel>
 
       {todosQuery.isLoading ? (
-        <Panel className="p-6">
+        <Panel>
           <p>Loading todos...</p>
         </Panel>
       ) : null}
 
       {todosQuery.isError ? (
-        <Panel className="p-6">
+        <Panel>
           <p>Failed to load todos.</p>
         </Panel>
       ) : null}
 
       {!todosQuery.isLoading && !todosQuery.isError && items.length === 0 ? (
-        <Panel className="p-8 text-center">
-          <p className="font-display text-2xl text-text">No active tasks yet.</p>
+        <Panel>
+          <p className="text-xl font-semibold text-text">No active tasks yet.</p>
           <p className="mt-2 text-sm text-muted">
             Add your first item to start shaping the workspace rhythm.
           </p>
@@ -141,7 +148,7 @@ export function TodoPage() {
       {items.length > 0 ? (
         <div className="space-y-3">
           {items.map((todo) => (
-            <Panel className="flex items-center justify-between gap-4 p-5" key={todo.id}>
+            <Panel className="flex items-center justify-between gap-4" key={todo.id}>
               <label className="flex items-center gap-3">
                 <input
                   className="h-4 w-4"
@@ -158,7 +165,7 @@ export function TodoPage() {
               </label>
 
               <button
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
+                className="desktop-inline-action inline-flex items-center justify-center rounded-full px-4 py-2 text-sm"
                 type="button"
                 onClick={() => deleteMutation.mutate(todo.id)}
               >
