@@ -29,9 +29,9 @@ export function PortfolioPage() {
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted">{portfolioData.intro}</p>
             <div className="flex flex-wrap gap-3">
-              <Button to="/#archive">Open Archive</Button>
+              <Button to="/#archive">Mở Kho Lưu Trữ</Button>
               <Button to="/login" variant="secondary">
-                Enter Workspace
+                Truy Cập Workspace
               </Button>
             </div>
           </div>

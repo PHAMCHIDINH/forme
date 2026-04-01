@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -124,5 +126,103 @@ func TestLoadTrimsCORSOrigins(t *testing.T) {
 
 	if got := strings.Join(cfg.CORSAllowedOrigins, ","); got != "http://localhost:5173,http://localhost:4173" {
 		t.Fatalf("expected trimmed origins, got %q", got)
+	}
+}
+
+func TestLoadLocalEnvLoadsDotEnvFromAncestorDirectory(t *testing.T) {
+	root := t.TempDir()
+	nested := filepath.Join(root, "cmd", "api")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatalf("failed to create nested directory: %v", err)
+	}
+
+	envPath := filepath.Join(root, ".env")
+	envFile := strings.Join([]string{
+		"DATABASE_URL=postgres://postgres:postgres@localhost:5432/pdh?sslmode=disable",
+		"JWT_SECRET=secret",
+		"OWNER_USERNAME=owner",
+		"OWNER_PASSWORD_HASH=$2b$12$Ql1OEDm9gTzCvIPdp2AvJ.8zYe6c7kwEZKtbG8ybULk8OyLT5DCWC",
+	}, "\n")
+	if err := os.WriteFile(envPath, []byte(envFile), 0o644); err != nil {
+		t.Fatalf("failed to write env file: %v", err)
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to capture working directory: %v", err)
+	}
+	t.Cleanup(func() {
+		if chdirErr := os.Chdir(wd); chdirErr != nil {
+			t.Fatalf("failed to restore working directory: %v", chdirErr)
+		}
+	})
+
+	if err := os.Chdir(nested); err != nil {
+		t.Fatalf("failed to change working directory: %v", err)
+	}
+
+	t.Setenv("DATABASE_URL", "")
+	t.Setenv("JWT_SECRET", "")
+	t.Setenv("OWNER_USERNAME", "")
+	t.Setenv("OWNER_PASSWORD_HASH", "")
+
+	if err := LoadLocalEnv(); err != nil {
+		t.Fatalf("expected env loading to succeed, got error: %v", err)
+	}
+
+	cfg := Load()
+
+	if cfg.DatabaseURL != "postgres://postgres:postgres@localhost:5432/pdh?sslmode=disable" {
+		t.Fatalf("expected database url to load from .env, got %q", cfg.DatabaseURL)
+	}
+	if cfg.JWTSecret != "secret" {
+		t.Fatalf("expected jwt secret to load from .env, got %q", cfg.JWTSecret)
+	}
+}
+
+func TestLoadLocalEnvDoesNotOverrideExplicitEnvironment(t *testing.T) {
+	root := t.TempDir()
+	nested := filepath.Join(root, "cmd", "api")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatalf("failed to create nested directory: %v", err)
+	}
+
+	envPath := filepath.Join(root, ".env")
+	envFile := strings.Join([]string{
+		"DATABASE_URL=postgres://from-file",
+		"JWT_SECRET=file-secret",
+	}, "\n")
+	if err := os.WriteFile(envPath, []byte(envFile), 0o644); err != nil {
+		t.Fatalf("failed to write env file: %v", err)
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to capture working directory: %v", err)
+	}
+	t.Cleanup(func() {
+		if chdirErr := os.Chdir(wd); chdirErr != nil {
+			t.Fatalf("failed to restore working directory: %v", chdirErr)
+		}
+	})
+
+	if err := os.Chdir(nested); err != nil {
+		t.Fatalf("failed to change working directory: %v", err)
+	}
+
+	t.Setenv("DATABASE_URL", "postgres://from-env")
+	t.Setenv("JWT_SECRET", "")
+
+	if err := LoadLocalEnv(); err != nil {
+		t.Fatalf("expected env loading to succeed, got error: %v", err)
+	}
+
+	cfg := Load()
+
+	if cfg.DatabaseURL != "postgres://from-env" {
+		t.Fatalf("expected existing database url to win, got %q", cfg.DatabaseURL)
+	}
+	if cfg.JWTSecret != "file-secret" {
+		t.Fatalf("expected missing jwt secret to load from file, got %q", cfg.JWTSecret)
 	}
 }

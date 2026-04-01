@@ -140,7 +140,7 @@ Recommended dock targets:
 - `Workspace`
 - `Contact`
 
-Dock interactions still perform normal route changes or anchor navigation.
+Dock interactions still perform normal route changes or anchor navigation. On mobile widths, the floating desktop dock must collapse into a clear, translucent bottom navigation bar (acting like a system tray) to preserve readable screen real estate.
 
 ### 5.3 Public Content Naming
 
@@ -364,7 +364,7 @@ Motion should be brief and informative:
 
 - hover elevation
 - focus shifts
-- subtle route-entry transitions
+- subtle route-entry transitions (e.g., a quiet fade or very slight scale-in when transitioning from `/login` to `/app` to signal system entry without cinematic delay)
 - light dock or button response
 
 Motion must never slow down login, navigation, or task interaction.
@@ -400,6 +400,7 @@ This redesign must not change:
 - auth contract
 - todo API contract
 - backend module scope
+- core MVP 1 frontend stack (React, Vite, Tailwind CSS, TanStack Query, and Radix UI primitives only where necessary for accessible overlays)
 
 ## 13. Verification Expectations
 

@@ -7,6 +7,8 @@ import { WindowFrame } from "../../shared/ui/WindowFrame";
 import { loginSchema, type LoginFormValues } from "./loginSchema";
 import { useLogin } from "./useSession";
 
+import { Button } from "../../shared/ui/Button";
+
 export function LoginPage() {
   const navigate = useNavigate();
   const loginMutation = useLogin();
@@ -34,57 +36,67 @@ export function LoginPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-4 lg:px-6 lg:py-6">
       <SystemBar
-        productLabel="Personal Digital Hub"
-        contextLabel="Workspace Access"
-        indicators={["Private System", "Warm macOS"]}
+        productLabel="Hệ Thống Đăng Nhập"
+        contextLabel="Yêu Cầu Xác Thực"
+        indicators={["ACCESS_CONTROL"]}
       />
 
       <div className="flex flex-1 items-center justify-center">
         <WindowFrame
-          title="Workspace Access"
-          subtitle="Bridge into the private machine"
-          className="w-full max-w-2xl"
+          title="Cổng Truy Cập Server"
+          subtitle="Cung Cấp Thông Tin Định Danh"
+          className="w-full max-w-lg"
         >
-          <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-6" noValidate onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <label htmlFor="username">Username</label>
-              <input id="username" autoComplete="username" {...register("username")} />
+              <label className="font-head block text-sm uppercase text-foreground" htmlFor="username">Tài Khoản</label>
+              <input 
+                id="username" 
+                className="w-full p-3 font-sans border-2 border-border shadow-sm text-lg" 
+                autoComplete="username" 
+                {...register("username")} 
+              />
               {errors.username ? (
-                <p className="text-sm text-red-700">{errors.username.message}</p>
+                <p className="font-bold text-sm text-destructive">{errors.username.message}</p>
               ) : null}
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password">Password</label>
+              <label className="font-head block text-sm uppercase text-foreground" htmlFor="password">Mật Khẩu</label>
               <input
                 id="password"
                 type="password"
+                className="w-full p-3 font-sans border-2 border-border shadow-sm text-lg"
                 autoComplete="current-password"
                 {...register("password")}
               />
               {errors.password ? (
-                <p className="text-sm text-red-700">{errors.password.message}</p>
+                <p className="font-bold text-sm text-destructive">{errors.password.message}</p>
               ) : null}
             </div>
 
             {loginMutation.isError ? (
-              <p className="text-sm text-red-700">Invalid credentials. Please try again.</p>
+              <div className="p-3 bg-destructive text-destructive-foreground border-2 border-border font-bold">
+                TỪ CHỐI TRUY CẬP. VUI LÒNG THỬ LẠI.
+              </div>
             ) : null}
 
-            <button
-              className="desktop-submit inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70"
-              type="submit"
-              disabled={loginMutation.isPending}
-            >
-              {loginMutation.isPending ? "Opening Workspace..." : "Enter Workspace"}
-            </button>
+            <div className="pt-4 flex flex-col gap-4">
+              <Button
+                type="submit"
+                disabled={loginMutation.isPending}
+                className="w-full text-base py-4"
+              >
+                {loginMutation.isPending ? "Đang Xác Nhận..." : "Khởi Tạo Phiên"}
+              </Button>
 
-            <Link
-              className="inline-flex text-sm text-muted underline-offset-4 hover:underline"
-              to="/"
-            >
-              Back to Public Desktop
-            </Link>
+              <Link
+                className="inline-flex justify-center text-sm font-bold uppercase text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+                to="/"
+              >
+                Huỷ và Trở Lại
+              </Link>
+            </div>
           </form>
         </WindowFrame>
       </div>

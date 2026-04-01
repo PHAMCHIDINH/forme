@@ -14,6 +14,10 @@ import (
 )
 
 func main() {
+	if err := config.LoadLocalEnv(); err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := config.Load()
 	if err := run(context.Background(), cfg.DatabaseURL, os.Args[1:]); err != nil {
 		log.Fatal(err)

@@ -43,11 +43,11 @@ export type PortfolioData = {
 
 export const portfolioData: PortfolioData = {
   displayName: "Pham Chi Dinh",
-  title: "System Architect",
+  title: "Full-stack Developer & System Architect",
   intro:
-    "A curated desktop scene for system design, active modules, and architecture artifacts that feel alive rather than archived.",
+    "Sinh viên năm cuối ngành Công nghệ Thông tin định hướng Full-stack Web Developer & System Architect. Sở hữu tư duy xây dựng kiến trúc hệ thống rõ ràng và thiết kế Neo-brutalism sắc bén.",
   githubUrl: "https://github.com/PHAMCHIDINH",
-  contactEmail: "contact@example.com",
+  contactEmail: "chidinhp4@gmail.com",
   desktopIndicators: ["Public Desktop", "Live Modules", "Warm macOS"],
   dockItems: [
     { label: "Portfolio", to: "/", end: true },
@@ -62,7 +62,7 @@ export const portfolioData: PortfolioData = {
     },
     archive: {
       title: "System Archive",
-      subtitle: "Selected systems and dossiers",
+      subtitle: "Sản phẩm & Dự án tiêu biểu",
     },
     operatingModel: {
       title: "Operating Model",
@@ -78,43 +78,50 @@ export const portfolioData: PortfolioData = {
     },
   },
   principles: [
-    "Modular boundaries over sprawling complexity.",
-    "Interfaces should feel calm even when systems are dense.",
-    "Products should expose structure instead of hiding it behind generic templates.",
+    "Modular boundaries over sprawling complexity. (Ưu tiên giới hạn module độc lập hơn sự cồng kềnh).",
+    "Giao diện cần phải dễ chịu và trực quan ngay cả khi hệ thống vô cùng phức tạp.",
+    "Khéo léo thể hiện kiến trúc sản phẩm thay vì giấu chúng sau các template rập khuôn.",
+    "Bảo vệ mã nguồn sạch (clean code) và hệ thống dễ dàng mở rộng.",
   ],
   archiveCards: [
     {
-      title: "AI Service Hub",
+      title: "Chợ Sinh Viên - C2C Platform",
       summary:
-        "Operational tooling framed as a modular service environment with reusable assistant workflows.",
+        "Nền tảng thương mại điện tử mua bán đồ cũ dành riêng cho cộng đồng sinh viên đại học. Được xây dựng với Next.js và NestJS.",
     },
     {
-      title: "Marketplace Systems",
+      title: "TimMach - Hệ thống AI Y tế",
       summary:
-        "Commerce architecture documented as a living system with integration boundaries and delivery artifacts.",
+        "Dự án phân tích rủi ro tim mạch và đề xuất tập luyện đa dịch vụ bằng React, Golang (Gin), và FastAPI Python.",
+    },
+    {
+      title: "AI-WAF Reporter (VNETWORK)",
+      summary:
+        "Hạ tầng tạo báo cáo kỹ thuật, quản lý workflow tự động hóa, lập lịch sinh PDF và gửi Email theo định kỳ hoạt động với PostgreSQL.",
     },
   ],
   registryCards: [
     {
       name: "Todo.app",
       status: "Live",
-      summary: "The first active application inside the private workspace.",
+      summary: "Ứng dụng trực tiếp khởi chạy trong Private Workspace hỗ trợ thao tác hàng ngày.",
     },
     {
-      name: "Files",
+      name: "Files Obj",
       status: "Registered",
-      summary: "Reserved for future asset and reference storage inside the machine.",
+      summary: "Kế hoạch xây dựng phân vùng lưu trữ tài liệu cấu trúc và Asset dùng nội bộ.",
     },
     {
-      name: "Automation",
+      name: "Cron Jobs",
       status: "Registered",
-      summary: "Planned space for recurring workflows and assistant actions.",
+      summary: "Hệ thống Automation thông minh dự kiến xử lý các công việc chạy ngầm (Background tasks).",
     },
   ],
   architectureSignals: [
     "API Design",
-    "Secure Access",
-    "Data Modeling",
-    "Deployment Workflow",
+    "Secure Access (JWT)",
+    "Data Modeling (pgx)",
+    "Goose Migrations",
+    "Modular React",
   ],
 };

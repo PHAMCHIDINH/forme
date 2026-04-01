@@ -1,14 +1,15 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { CopySlash, LayoutGrid, CheckSquare, Globe } from "lucide-react";
 
-import { DockNav } from "../../shared/ui/DockNav";
-import { SystemBar } from "../../shared/ui/SystemBar";
-import { WindowFrame } from "../../shared/ui/WindowFrame";
+import { SidebarNav } from "../../shared/ui/SidebarNav";
+import { RightPanel } from "../../shared/ui/RightPanel";
+import { CommandPalette } from "../../shared/ui/CommandPalette";
 import { useLogout, useSession } from "../auth/useSession";
 
 const launcherItems = [
-  { label: "Home", to: "/app", end: true },
-  { label: "Todo", to: "/app/todo" },
-  { label: "Public Hub", to: "/" },
+  { label: "Trang Chủ", to: "/app", icon: LayoutGrid, end: true },
+  { label: "Công Việc", to: "/app/todo", icon: CheckSquare },
+  { label: "Hub Công Khai", to: "/", icon: Globe },
 ];
 
 export function DashboardLayout() {
@@ -21,48 +22,26 @@ export function DashboardLayout() {
     navigate("/login");
   };
 
+  const userName = sessionQuery.data?.user.displayName ?? "OPERATOR";
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-4 py-4 lg:px-6 lg:py-6">
-      <SystemBar
-        productLabel="Personal Digital Hub"
-        contextLabel="Private Workspace"
-        indicators={["Authenticated", "Todo Live"]}
+    <div className="flex h-screen w-full bg-[#f4e4d6] overflow-hidden relative">
+      <SidebarNav 
+        ariaLabel="Điều hướng Workspace IDE" 
+        items={launcherItems} 
+        operatorName={userName} 
+        onLogout={handleLogout} 
+        isLoggingOut={logoutMutation.isPending} 
       />
 
-      <WindowFrame
-        title="Private Workspace"
-        subtitle="A calmer operating surface for active tools"
-        toolbar={
-          <button
-            className="desktop-logout inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-70"
-            type="button"
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-          >
-            {logoutMutation.isPending ? "Closing..." : "Logout"}
-          </button>
-        }
-      >
-        <div className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-text">
-                {sessionQuery.data?.user.displayName ?? "Owner"}
-              </p>
-              <p className="text-sm text-muted">
-                Workspace launcher and routed applications.
-              </p>
-            </div>
-
-            <NavLink className="text-sm text-muted underline-offset-4 hover:underline" to="/">
-              Return to Public Hub
-            </NavLink>
-          </div>
-
-          <DockNav ariaLabel="Workspace launcher" items={launcherItems} />
+      <main className="flex-1 ml-20 h-full overflow-y-auto p-4 lg:p-8">
+        <div className="w-full max-w-6xl mx-auto min-h-full flex flex-col relative animate-in fade-in duration-300">
           <Outlet />
         </div>
-      </WindowFrame>
+      </main>
+
+      <RightPanel />
+      <CommandPalette />
     </div>
   );
 }

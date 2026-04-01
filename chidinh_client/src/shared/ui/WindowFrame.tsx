@@ -17,23 +17,22 @@ export function WindowFrame({
   children,
 }: Props) {
   return (
-    <section className={`window-frame ${className}`.trim()}>
-      <header className="window-frame__header">
-        <div aria-label="Window controls" className="window-frame__traffic">
-          <span className="window-frame__dot window-frame__dot--close" />
-          <span className="window-frame__dot window-frame__dot--minimize" />
-          <span className="window-frame__dot window-frame__dot--zoom" />
+    <section className={`border-2 border-border bg-card shadow-md flex flex-col ${className}`.trim()}>
+      <header className="border-b-2 border-border bg-primary px-4 py-3 flex items-center justify-between">
+        <div aria-hidden="true" className="flex items-center gap-2">
+          <div className="h-3 w-3 bg-card border-2 border-border" />
+          <div className="h-3 w-3 bg-card border-2 border-border" />
         </div>
 
-        <div className="min-w-0 flex-1 text-center">
-          <p className="window-frame__title">{title}</p>
-          {subtitle ? <p className="window-frame__subtitle">{subtitle}</p> : null}
+        <div className="min-w-0 flex-1 px-4 text-center">
+          <p className="font-head text-primary-foreground text-sm tracking-wider uppercase">{title}</p>
+          {subtitle ? <p className="text-xs font-medium text-primary-foreground/80 mt-1">{subtitle}</p> : null}
         </div>
 
-        <div className="flex min-w-24 justify-end">{toolbar}</div>
+        <div className="flex min-w-[3rem] justify-end">{toolbar}</div>
       </header>
 
-      <div className={`window-frame__body ${contentClassName}`.trim()}>{children}</div>
+      <div className={`p-5 ${contentClassName}`.trim()}>{children}</div>
     </section>
   );
 }
