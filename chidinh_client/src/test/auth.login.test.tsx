@@ -25,16 +25,16 @@ describe("LoginPage", () => {
   it("renders an access window that bridges into the workspace", () => {
     renderLoginRoute();
 
-    expect(screen.getByText(/workspace access/i, { selector: ".system-bar__context" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /enter workspace/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /back to public desktop/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /hệ thống đăng nhập/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /khởi tạo phiên/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /huỷ và trở lại/i })).toBeInTheDocument();
   });
 
   it("shows validation messages before submission", async () => {
     const user = userEvent.setup();
 
     renderLoginRoute();
-    await user.click(screen.getByRole("button", { name: /enter workspace/i }));
+    await user.click(screen.getByRole("button", { name: /khởi tạo phiên/i }));
 
     expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
     expect(screen.getByText(/password is required/i)).toBeInTheDocument();
@@ -48,9 +48,9 @@ describe("LoginPage", () => {
 
     renderLoginRoute();
 
-    await user.type(screen.getByLabelText(/username/i), "ada");
-    await user.type(screen.getByLabelText(/password/i), "swordfish");
-    await user.click(screen.getByRole("button", { name: /enter workspace/i }));
+    await user.type(screen.getByLabelText(/tài khoản/i), "ada");
+    await user.type(screen.getByLabelText(/mật khẩu/i), "swordfish");
+    await user.click(screen.getByRole("button", { name: /khởi tạo phiên/i }));
 
     expect(await screen.findByText("Private workspace")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);

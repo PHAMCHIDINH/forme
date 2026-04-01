@@ -108,11 +108,12 @@ export function TodoPage() {
           onSubmit={form.handleSubmit(handleCreate)}
         >
           <div className="flex-1">
-            <input 
-              id="todo-title" 
-              className="w-full text-lg p-4 font-bold placeholder:font-normal placeholder:opacity-50" 
-              placeholder="Hôm nay bạn cần làm gì?" 
-              {...form.register("title")} 
+            <input
+              aria-label="Tiêu đề công việc"
+              id="todo-title"
+              className="w-full text-lg p-4 font-bold placeholder:font-normal placeholder:opacity-50"
+              placeholder="Hôm nay bạn cần làm gì?"
+              {...form.register("title")}
             />
             {form.formState.errors.title ? (
               <p className="mt-2 text-sm font-bold text-destructive uppercase bg-destructive/10 inline-block px-2">{form.formState.errors.title.message}</p>
@@ -173,6 +174,7 @@ export function TodoPage() {
 
             <Button
               variant={todo.completed ? "ghost" : "secondary"}
+              aria-label={`Xóa công việc ${todo.title}`}
               className="px-4 py-2 font-head text-xs shadow-none border hover:shadow-none hover:bg-destructive hover:text-white"
               type="button"
               onClick={() => deleteMutation.mutate(todo.id)}

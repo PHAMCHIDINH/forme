@@ -19,11 +19,9 @@ describe("DashboardLayout", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      await screen.findByText(/private workspace/i, { selector: ".system-bar__context" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: /workspace launcher/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /todo/i })).toBeInTheDocument();
-    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 2, name: /tổng quan không gian làm việc/i })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /điều hướng workspace ide/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /công việc/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /người dùng ada lovelace/i })).toBeInTheDocument();
   });
 });

@@ -13,7 +13,8 @@ describe("App routes", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/public desktop/i, { selector: ".system-bar__context" })).toBeInTheDocument();
+    expect(screen.getAllByText("Public Desktop")).toHaveLength(2);
+    expect(screen.getByRole("navigation", { name: /desktop dock/i })).toBeInTheDocument();
   });
 
   it("renders the access window on the login route", () => {
@@ -27,8 +28,7 @@ describe("App routes", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      screen.getByText(/workspace access/i, { selector: ".system-bar__context" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /hệ thống đăng nhập/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /khởi tạo phiên/i })).toBeInTheDocument();
   });
 });

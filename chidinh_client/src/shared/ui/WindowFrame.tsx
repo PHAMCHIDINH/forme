@@ -19,9 +19,9 @@ export function WindowFrame({
   return (
     <section className={`border-2 border-border bg-card shadow-md flex flex-col ${className}`.trim()}>
       <header className="border-b-2 border-border bg-primary px-4 py-3 flex items-center justify-between">
-        <div aria-hidden="true" className="flex items-center gap-2">
-          <div className="h-3 w-3 bg-card border-2 border-border" />
-          <div className="h-3 w-3 bg-card border-2 border-border" />
+        <div aria-label="Window controls" className="flex items-center gap-2">
+          <div aria-hidden="true" className="h-3 w-3 bg-card border-2 border-border" />
+          <div aria-hidden="true" className="h-3 w-3 bg-card border-2 border-border" />
         </div>
 
         <div className="min-w-0 flex-1 px-4 text-center">

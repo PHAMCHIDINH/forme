@@ -18,8 +18,7 @@ describe("RequireAuth", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      await screen.findByText(/workspace access/i, { selector: ".system-bar__context" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: /hệ thống đăng nhập/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /khởi tạo phiên/i })).toBeInTheDocument();
   });
 });

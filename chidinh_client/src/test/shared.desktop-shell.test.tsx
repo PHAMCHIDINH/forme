@@ -47,6 +47,7 @@ describe("desktop shell primitives", () => {
 
     expect(screen.getByText("Personal Digital Hub")).toBeInTheDocument();
     expect(screen.getByText("Public Desktop")).toBeInTheDocument();
+    expect(screen.getByText("Live Modules")).toBeInTheDocument();
     expect(screen.getByText("Warm macOS")).toBeInTheDocument();
   });
 });

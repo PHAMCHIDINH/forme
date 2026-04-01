@@ -6,9 +6,8 @@ describe("App", () => {
   it("renders the public desktop portal headline", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { level: 1, name: /personal digital hub/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/curated desktop scene/i, { selector: ".window-frame__subtitle" }),
-    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1, name: /personal digital hub/i })).toHaveLength(2);
+    expect(screen.getByText(/curated desktop scene/i)).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /desktop dock/i })).toBeInTheDocument();
   });
 });

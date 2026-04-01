@@ -13,20 +13,20 @@ describe("tailwind theme integration", () => {
       from: cssPath,
     });
 
-    expect(result.css).toContain(".bg-surface");
-    expect(result.css).toContain(".text-text");
-    expect(result.css).toContain(".font-display");
-    expect(result.css).toContain(".shadow-panel");
+    expect(result.css).toContain(".bg-primary");
+    expect(result.css).toContain(".text-foreground");
+    expect(result.css).toContain(".font-head");
+    expect(result.css).toContain(".shadow-md");
   });
 
-  it("defines wallpaper, glass, and dock desktop classes", async () => {
+  it("defines the active theme tokens and brutalist base rules", async () => {
     const cssPath = path.resolve(process.cwd(), "src/styles/globals.css");
     const input = await readFile(cssPath, "utf8");
 
-    expect(input).toContain("--wallpaper-start");
-    expect(input).toContain("--glass-surface");
-    expect(input).toContain("--dock-surface");
-    expect(input).toContain(".desktop-dock");
-    expect(input).toContain("@media (max-width: 768px)");
+    expect(input).toContain("--font-head");
+    expect(input).toContain("--color-primary");
+    expect(input).toContain("--background");
+    expect(input).toContain("input:focus");
+    expect(input).toContain("button {");
   });
 });
