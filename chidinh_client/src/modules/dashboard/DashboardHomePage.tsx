@@ -3,35 +3,35 @@ import { SectionHeading } from "../../shared/ui/SectionHeading";
 
 export function DashboardHomePage() {
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <SectionHeading
-        eyebrow="Workspace"
-        title="Workspace Overview"
-        description="A focused operating surface for the tools that power the personal digital hub."
+        eyebrow="LÕI HỆ THỐNG"
+        title="Tổng Quan Không Gian Làm Việc"
+        description="Giao diện cá nhân hóa dùng để tương tác trực tiếp, theo dõi dữ liệu và điều phối các dự án hệ thống."
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Live Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Todo</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Track current execution items and short-term delivery tasks.
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Panel className="bg-[#ffdb33] border-4">
+          <p className="font-bold text-xs uppercase tracking-widest text-[#5a5a5a] bg-white border-2 border-border px-2 py-1 inline-block mb-2">Module Hoạt Động</p>
+          <h3 className="text-2xl font-head uppercase text-foreground">Công Việc (Tasks)</h3>
+          <p className="mt-3 text-sm font-medium text-foreground">
+            Ghi nhận và thực thi ngay lập tức các tác vụ trong ngày.
           </p>
         </Panel>
 
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Planned Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Files</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Reserve space for asset organization and operational references.
+        <Panel className="bg-[#ff6b6b] text-white border-4 border-border">
+          <p className="font-bold text-xs uppercase tracking-widest text-[#000] bg-white border-2 border-border px-2 py-1 inline-block mb-2">Đã Kích Hoạt</p>
+          <h3 className="text-2xl font-head uppercase text-white">Tài Liệu (Files)</h3>
+          <p className="mt-3 text-sm font-medium text-white">
+            Khu vực lưu trữ các file thiết kế cấu trúc và tư liệu tham chiếu.
           </p>
         </Panel>
 
-        <Panel className="p-6">
-          <p className="text-sm text-muted">Planned Module</p>
-          <h3 className="mt-3 text-xl font-display text-text">Automation</h3>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            Prepare the shell for recurring workflows and assistant-driven tasks.
+        <Panel className="bg-[#3a3a3a] text-white border-4 border-border">
+          <p className="font-bold text-xs uppercase tracking-widest text-[#000] bg-white border-2 border-border px-2 py-1 inline-block mb-2">Đã Kích Hoạt</p>
+          <h3 className="text-2xl font-head uppercase text-white">Tính Năng Định Kỳ</h3>
+          <p className="mt-3 text-sm font-medium text-white/90">
+            Hệ thống pipeline tự động chạy luồng công việc quy trình.
           </p>
         </Panel>
       </div>

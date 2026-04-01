@@ -1,95 +1,93 @@
 import { Button } from "../../shared/ui/Button";
+import { DockNav } from "../../shared/ui/DockNav";
 import { Panel } from "../../shared/ui/Panel";
-import { SectionHeading } from "../../shared/ui/SectionHeading";
+import { SystemBar } from "../../shared/ui/SystemBar";
+import { WindowFrame } from "../../shared/ui/WindowFrame";
 import { portfolioData } from "./data";
 
 export function PortfolioPage() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-8 lg:px-10 lg:py-10">
-      <Panel className="overflow-hidden px-6 py-8 lg:px-10 lg:py-12">
-        <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
+    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-4 py-4 lg:px-6 lg:py-6">
+      <SystemBar
+        productLabel="Personal Digital Hub"
+        contextLabel="Public Desktop"
+        indicators={portfolioData.desktopIndicators}
+      />
+
+      <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <WindowFrame
+          title={portfolioData.windows.identity.title}
+          subtitle={portfolioData.windows.identity.subtitle}
+          className="lg:translate-y-2"
+        >
           <div className="space-y-6">
-            <p className="text-sm uppercase tracking-[0.24em] text-accent">
+            <p className="text-sm uppercase tracking-[0.24em] text-muted">
               {portfolioData.displayName}
             </p>
-            <h1 className="max-w-3xl font-display text-5xl leading-tight text-text">
+            <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-text">
               Personal Digital Hub
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted">{portfolioData.intro}</p>
             <div className="flex flex-wrap gap-3">
-              <Button to="/#systems">Explore Systems</Button>
+              <Button to="/#archive">Mở Kho Lưu Trữ</Button>
               <Button to="/login" variant="secondary">
-                Enter Workspace
+                Truy Cập Workspace
               </Button>
             </div>
           </div>
+        </WindowFrame>
 
-          <Panel className="bg-surfaceAlt p-6">
-            <p className="text-sm text-muted">Role</p>
-            <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
-            <p className="mt-4 text-sm leading-7 text-muted">
-              Building integrated digital systems with modular interfaces, stable APIs, and
-              production-ready workflows.
-            </p>
-          </Panel>
-        </div>
-      </Panel>
-
-      <section className="space-y-6">
-        <SectionHeading
-          eyebrow="Framework"
-          title="Operating Principles"
-          description="A calm system only scales when the boundaries, rituals, and interfaces stay clear."
-        />
-        <div className="grid gap-4 lg:grid-cols-3">
-          {portfolioData.principles.map((principle) => (
-            <Panel className="p-6" key={principle.title}>
-              <h3 className="font-display text-2xl text-text">{principle.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-muted">{principle.description}</p>
-            </Panel>
-          ))}
-        </div>
+        <WindowFrame
+          title={portfolioData.windows.registry.title}
+          subtitle={portfolioData.windows.registry.subtitle}
+          className="lg:translate-y-10"
+        >
+          <div className="grid gap-3">
+            {portfolioData.registryCards.map((card) => (
+              <Panel key={card.name}>
+                <p className="text-sm text-muted">{card.status}</p>
+                <p className="mt-2 text-lg font-medium text-text">{card.name}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">{card.summary}</p>
+              </Panel>
+            ))}
+          </div>
+        </WindowFrame>
       </section>
 
-      <section id="systems" className="space-y-6">
-        <SectionHeading
-          eyebrow="Portfolio"
-          title="Selected Systems"
-          description="Project highlights framed as operational systems instead of static case studies."
-        />
-        <div className="grid gap-4 lg:grid-cols-2">
-          {portfolioData.projects.map((project) => (
-            <Panel className="p-6" key={project.name}>
-              <p className="text-xs uppercase tracking-[0.24em] text-accent">{project.domain}</p>
-              <h3 className="mt-3 font-display text-2xl text-text">{project.name}</h3>
-              <p className="mt-4 text-sm leading-7 text-muted">{project.summary}</p>
-            </Panel>
-          ))}
-        </div>
+      <section id="archive" className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+        <WindowFrame
+          title={portfolioData.windows.operatingModel.title}
+          subtitle={portfolioData.windows.operatingModel.subtitle}
+          className="lg:-translate-y-4"
+        >
+          <div className="grid gap-3">
+            {portfolioData.principles.map((principle) => (
+              <Panel key={principle}>
+                <p className="leading-7 text-muted">{principle}</p>
+              </Panel>
+            ))}
+          </div>
+        </WindowFrame>
+
+        <WindowFrame
+          title={portfolioData.windows.archive.title}
+          subtitle={portfolioData.windows.archive.subtitle}
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            {portfolioData.archiveCards.map((card) => (
+              <Panel key={card.title}>
+                <p className="text-lg font-medium text-text">{card.title}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">{card.summary}</p>
+              </Panel>
+            ))}
+          </div>
+        </WindowFrame>
       </section>
 
-      <section className="space-y-6">
-        <SectionHeading
-          eyebrow="Hub"
-          title="Live Capabilities"
-          description="Current and near-future modules that define the product as a living digital workspace."
-        />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {portfolioData.capabilities.map((capability) => (
-            <Panel className="p-5" key={capability.name}>
-              <p className="text-sm text-muted">{capability.status}</p>
-              <p className="mt-3 text-lg text-text">{capability.name}</p>
-            </Panel>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <SectionHeading
-          eyebrow="Architecture"
-          title="Architecture Signal"
-          description="A focused view into the technical decisions that shape the system."
-        />
+      <WindowFrame
+        title={portfolioData.windows.notes.title}
+        subtitle={portfolioData.windows.notes.subtitle}
+      >
         <div className="flex flex-wrap gap-3">
           {portfolioData.architectureSignals.map((signal) => (
             <Panel className="px-4 py-3" key={signal}>
@@ -97,14 +95,20 @@ export function PortfolioPage() {
             </Panel>
           ))}
         </div>
-      </section>
 
-      <footer className="flex flex-wrap items-center gap-4 border-t border-border py-6 text-sm text-muted">
-        <a href={portfolioData.githubUrl} target="_blank" rel="noreferrer">
-          GitHub
-        </a>
-        <a href={`mailto:${portfolioData.contactEmail}`}>Contact</a>
-      </footer>
+        <div
+          id="contact"
+          className="mt-6 flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm text-muted"
+        >
+          <a href={portfolioData.githubUrl} rel="noreferrer" target="_blank">
+            GitHub
+          </a>
+          <a href={`mailto:${portfolioData.contactEmail}`}>Contact</a>
+          <span>{portfolioData.title}</span>
+        </div>
+      </WindowFrame>
+
+      <DockNav ariaLabel="Desktop dock" items={portfolioData.dockItems} />
     </main>
   );
 }

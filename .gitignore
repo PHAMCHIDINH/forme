@@ -1,4 +1,7 @@
 .worktrees/
+.playwright-cli/
+.superpowers/
+.gotmp/
 
 # frontend
 chidinh_client/node_modules/

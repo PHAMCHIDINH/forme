@@ -6,7 +6,7 @@ import { AppRoutes } from "../app/router/AppRouter";
 import { createTestQueryClient, jsonResponse, mockFetchSequence } from "./test-utils";
 
 describe("RequireAuth", () => {
-  it("redirects unauthenticated users to the login page", async () => {
+  it("redirects unauthenticated users to the login access window", async () => {
     mockFetchSequence(jsonResponse({ user: null }));
     const queryClient = createTestQueryClient();
 
@@ -18,6 +18,7 @@ describe("RequireAuth", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: /enter workspace/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: /hệ thống đăng nhập/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /khởi tạo phiên/i })).toBeInTheDocument();
   });
 });
