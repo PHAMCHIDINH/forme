@@ -1,0 +1,30 @@
+previews:
+  generation: automatic
+
+services:
+  - type: web
+    name: chidinh-api
+    runtime: docker
+    rootDir: chidinh_api
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - chidinh_api/**
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: OWNER_USERNAME
+        sync: false
+      - key: OWNER_PASSWORD_HASH
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: COOKIE_SECURE
+        value: true
+      - key: COOKIE_SAME_SITE
+        value: "None"
+      - key: DATABASE_URL
+        sync: false
