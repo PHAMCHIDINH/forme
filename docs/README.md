@@ -25,4 +25,5 @@ the Personal Digital Hub.
   UI primitive inventory/taxonomy and prototype freeze boundaries for the
   frontend rebuild.
 - `superpowers/plans/2026-04-02-forme-frontend-rebuild-completion.md`
-  Full implementation plan for finishing frontend rebuild phases 2-6.
+  Full implementation plan for finishing frontend rebuild phases 2-6, with
+  inline execution tracked on branch `codex/forme-foundation`.
