@@ -1,41 +1,185 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Panel } from "../../shared/ui/Panel";
 import { SectionHeading } from "../../shared/ui/SectionHeading";
 import { createTodo, deleteTodo, listTodos, updateTodo } from "./api";
-import { TaskItem, TaskListView } from "./taskTypes";
+import { TAG_SUGGESTIONS } from "./tagSuggestions";
+import { CreateTaskInput, TaskItem, TaskListView, TaskPriority, TaskStatus, UpdateTaskInput } from "./taskTypes";
 
-const todoSchema = z.object({
-  title: z.string().trim().min(1, "Task title is required").max(200, "Task title is too long"),
+type LayoutMode = "list" | "board";
+
+type TaskFormState = {
+  title: string;
+  descriptionHtml: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueOn: string;
+  tags: string[];
+};
+
+const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
+const DEFAULT_FORM_STATE: TaskFormState = {
+  title: "",
+  descriptionHtml: "",
+  status: "todo",
+  priority: "medium",
+  dueOn: "",
+  tags: [],
+};
+
+const STATUS_LABELS: Record<TaskStatus, string> = {
+  todo: "To do",
+  in_progress: "In progress",
+  done: "Done",
+  cancelled: "Cancelled",
+};
+
+const formatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: APP_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
 });
 
-type TodoFormValues = z.infer<typeof todoSchema>;
+function normalizeTag(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function parseTagInput(value: string) {
+  return value
+    .split(",")
+    .map((part) => normalizeTag(part))
+    .filter(Boolean);
+}
+
+function addUniqueTags(existing: string[], next: string[]) {
+  const seen = new Set(existing);
+  const merged = [...existing];
+  for (const tag of next) {
+    if (seen.has(tag)) {
+      continue;
+    }
+    seen.add(tag);
+    merged.push(tag);
+  }
+  return merged;
+}
+
+function formatDateInputInAppZone(iso: string | null) {
+  if (!iso) {
+    return "";
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const parts = formatter.formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function dateInputToIsoInAppZone(value: string) {
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+
+  if (!year || !month || !day) {
+    return undefined;
+  }
+
+  const utcMs = Date.UTC(year, month - 1, day, -7, 0, 0, 0);
+  return new Date(utcMs).toISOString();
+}
+
+function formatDueAt(iso: string | null) {
+  if (!iso) {
+    return null;
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return formatter.format(date);
+}
+
+function sanitizeRichText(html: string) {
+  const withoutScripts = html
+    .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script>/gi, "")
+    .replace(/<\s*style[^>]*>[\s\S]*?<\s*\/\s*style>/gi, "");
+
+  return withoutScripts.replace(/<\/?([a-z0-9-]+)(\s[^>]*)?>/gi, (match, rawTag) => {
+    const tag = String(rawTag).toLowerCase();
+    const allowed = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
+    if (!allowed.has(tag)) {
+      return "";
+    }
+    return match.startsWith("</") ? `</${tag}>` : `<${tag}>`;
+  });
+}
+
+function toFormState(item: TaskItem): TaskFormState {
+  return {
+    title: item.title,
+    descriptionHtml: item.descriptionHtml ?? "",
+    status: item.status,
+    priority: item.priority,
+    dueOn: formatDateInputInAppZone(item.dueAt),
+    tags: item.tags ?? [],
+  };
+}
 
 export function TodoPage() {
   const queryClient = useQueryClient();
+  const descriptionEditorRef = useRef<HTMLDivElement | null>(null);
+
   const [view, setView] = useState<TaskListView>("active");
+  const [layout, setLayout] = useState<LayoutMode>("list");
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [formState, setFormState] = useState<TaskFormState>(DEFAULT_FORM_STATE);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setSearch(searchInput.trim()), 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
+
+  useEffect(() => {
+    const editor = descriptionEditorRef.current;
+    if (!editor) {
+      return;
+    }
+    if (editor.innerHTML !== formState.descriptionHtml) {
+      editor.innerHTML = formState.descriptionHtml;
+    }
+  }, [formState.descriptionHtml]);
 
   const todosQuery = useQuery({
     queryKey: ["todos", view, search],
     queryFn: () => listTodos({ view, q: search || undefined }),
   });
 
-  const form = useForm<TodoFormValues>({
-    resolver: zodResolver(todoSchema),
-    defaultValues: {
-      title: "",
-    },
-  });
-
   const items = todosQuery.data?.items ?? [];
+
   const metrics = useMemo(() => {
     const total = items.length;
-    const completed = items.filter((item) => item.status === "done").length;
+    const completed = items.filter((item) => item.status === "done" && item.archivedAt == null).length;
 
     return {
       total,
@@ -45,16 +189,14 @@ export function TodoPage() {
   }, [items]);
 
   const createMutation = useMutation({
-    mutationFn: (newTitle: string) => createTodo({ title: newTitle }),
+    mutationFn: (payload: CreateTaskInput) => createTodo(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
-      form.reset();
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: TaskItem["status"] }) =>
-      updateTodo(id, { status }),
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateTaskInput }) => updateTodo(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
@@ -67,12 +209,84 @@ export function TodoPage() {
     },
   });
 
-  const handleCreate = async ({ title }: TodoFormValues) => {
-    try {
-      await createMutation.mutateAsync(title);
-    } catch (error) {
-      // Error is rendered from mutation state.
+  const boardGroups = useMemo(
+    () => ({
+      todo: items.filter((item) => item.status === "todo"),
+      in_progress: items.filter((item) => item.status === "in_progress"),
+      done: items.filter((item) => item.status === "done"),
+      cancelled: items.filter((item) => item.status === "cancelled"),
+    }),
+    [items],
+  );
+
+  const clearForm = () => {
+    setFormState(DEFAULT_FORM_STATE);
+    setTagInput("");
+    setFormError(null);
+    setEditingTaskId(null);
+  };
+
+  const runDescriptionCommand = (command: "bold" | "italic" | "insertUnorderedList") => {
+    descriptionEditorRef.current?.focus();
+    document.execCommand(command);
+    const next = sanitizeRichText(descriptionEditorRef.current?.innerHTML ?? "");
+    setFormState((current) => ({ ...current, descriptionHtml: next }));
+  };
+
+  const pushTags = (rawValue: string) => {
+    const parsed = parseTagInput(rawValue);
+    if (parsed.length === 0) {
+      return;
     }
+
+    setFormState((current) => ({
+      ...current,
+      tags: addUniqueTags(current.tags, parsed),
+    }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = formState.title.trim();
+
+    if (!title) {
+      setFormError("Task title is required");
+      return;
+    }
+
+    const payload: CreateTaskInput = {
+      title,
+      descriptionHtml: formState.descriptionHtml ? sanitizeRichText(formState.descriptionHtml) : undefined,
+      status: formState.status,
+      priority: formState.priority,
+      dueAt: formState.dueOn ? dateInputToIsoInAppZone(formState.dueOn) : undefined,
+      tags: formState.tags,
+    };
+
+    try {
+      if (editingTaskId) {
+        await updateMutation.mutateAsync({
+          id: editingTaskId,
+          payload: {
+            ...payload,
+            dueAt: payload.dueAt ?? null,
+            tags: payload.tags ?? [],
+          },
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      clearForm();
+    } catch (error) {
+      setFormError("Failed to save task");
+    }
+  };
+
+  const setEditingTask = (item: TaskItem) => {
+    setEditingTaskId(item.id);
+    setFormState(toFormState(item));
+    setTagInput("");
+    setFormError(null);
   };
 
   return (
@@ -84,7 +298,7 @@ export function TodoPage() {
       />
 
       <Panel className="p-5">
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-2">
             <label htmlFor="todo-view">View</label>
             <select
@@ -104,10 +318,21 @@ export function TodoPage() {
             <label htmlFor="todo-search">Search</label>
             <input
               id="todo-search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Search title, description, tags"
             />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="todo-layout">Layout</label>
+            <select
+              id="todo-layout"
+              value={layout}
+              onChange={(event) => setLayout(event.target.value as LayoutMode)}
+            >
+              <option value="list">List</option>
+              <option value="board">Board</option>
+            </select>
           </div>
         </div>
       </Panel>
@@ -128,25 +353,173 @@ export function TodoPage() {
       </div>
 
       <Panel className="p-6">
-        <form className="flex flex-col gap-3 md:flex-row md:items-end" onSubmit={form.handleSubmit(handleCreate)}>
-          <div className="flex-1 space-y-2">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
             <label htmlFor="todo-title">Task Title</label>
             <input
               id="todo-title"
               placeholder="Add a new task"
-              {...form.register("title")}
+              value={formState.title}
+              onChange={(event) => {
+                setFormState((current) => ({ ...current, title: event.target.value }));
+                if (formError) {
+                  setFormError(null);
+                }
+              }}
             />
-            {form.formState.errors.title ? (
-              <p className="text-sm text-red-700">{form.formState.errors.title.message}</p>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="todo-due">Due date</label>
+              <input
+                id="todo-due"
+                type="date"
+                value={formState.dueOn}
+                onChange={(event) => setFormState((current) => ({ ...current, dueOn: event.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="todo-status">Status</label>
+              <select
+                id="todo-status"
+                value={formState.status}
+                onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value as TaskStatus }))}
+              >
+                <option value="todo">To do</option>
+                <option value="in_progress">In progress</option>
+                <option value="done">Done</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="todo-priority">Priority</label>
+              <select
+                id="todo-priority"
+                value={formState.priority}
+                onChange={(event) =>
+                  setFormState((current) => ({ ...current, priority: event.target.value as TaskPriority }))
+                }
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="todo-tags">Tags</label>
+            <input
+              id="todo-tags"
+              value={tagInput}
+              placeholder="Type tag and press Enter or comma"
+              onChange={(event) => setTagInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  pushTags(tagInput);
+                  setTagInput("");
+                }
+              }}
+              onBlur={() => {
+                pushTags(tagInput);
+                setTagInput("");
+              }}
+            />
+            <div className="flex flex-wrap gap-2">
+              {TAG_SUGGESTIONS.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted hover:bg-surfaceAlt"
+                  onClick={() => pushTags(tag)}
+                >
+                  + #{tag}
+                </button>
+              ))}
+            </div>
+            {formState.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {formState.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="rounded-full bg-surfaceAlt px-3 py-1 text-xs text-text"
+                    onClick={() =>
+                      setFormState((current) => ({
+                        ...current,
+                        tags: current.tags.filter((currentTag) => currentTag !== tag),
+                      }))
+                    }
+                  >
+                    #{tag} ×
+                  </button>
+                ))}
+              </div>
             ) : null}
           </div>
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-            type="submit"
-            disabled={createMutation.isPending}
-          >
-            {createMutation.isPending ? "Adding..." : "Add Task"}
-          </button>
+
+          <div className="space-y-2">
+            <p className="text-sm text-muted">Description (rich text nhẹ)</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded border border-border px-3 py-1 text-xs"
+                onClick={() => runDescriptionCommand("bold")}
+              >
+                B
+              </button>
+              <button
+                type="button"
+                className="rounded border border-border px-3 py-1 text-xs"
+                onClick={() => runDescriptionCommand("italic")}
+              >
+                I
+              </button>
+              <button
+                type="button"
+                className="rounded border border-border px-3 py-1 text-xs"
+                onClick={() => runDescriptionCommand("insertUnorderedList")}
+              >
+                UL
+              </button>
+            </div>
+            <div
+              ref={descriptionEditorRef}
+              role="textbox"
+              aria-label="Task description"
+              contentEditable
+              className="min-h-24 rounded border border-border bg-surface px-3 py-2 text-sm text-text"
+              onInput={(event) => {
+                const value = sanitizeRichText(event.currentTarget.innerHTML);
+                setFormState((current) => ({ ...current, descriptionHtml: value }));
+              }}
+            />
+          </div>
+
+          {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {editingTaskId ? (updateMutation.isPending ? "Saving..." : "Save Task") : createMutation.isPending ? "Adding..." : "Add Task"}
+            </button>
+            {editingTaskId ? (
+              <button
+                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-5 py-3 text-sm text-text transition hover:bg-surfaceAlt"
+                type="button"
+                onClick={clearForm}
+              >
+                Cancel Edit
+              </button>
+            ) : null}
+          </div>
         </form>
       </Panel>
 
@@ -171,39 +544,131 @@ export function TodoPage() {
         </Panel>
       ) : null}
 
-      {items.length > 0 ? (
+      {items.length > 0 && layout === "list" ? (
         <div className="space-y-3">
           {items.map((todo) => (
-            <Panel className="flex items-center justify-between gap-4 p-5" key={todo.id}>
-              <label className="flex items-center gap-3">
-                <input
-                  className="h-4 w-4"
-                  type="checkbox"
-                  checked={todo.status === "done"}
+            <Panel className="space-y-3 p-5" key={todo.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-text">{todo.title}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {todo.status} · {todo.priority}
+                    {todo.dueAt ? ` · due ${formatDueAt(todo.dueAt)}` : ""}
+                    {todo.tags.length > 0 ? ` · #${todo.tags.join(" #")}` : ""}
+                  </p>
+                </div>
+                <select
+                  aria-label={`Status for ${todo.title}`}
+                  value={todo.status}
                   onChange={(event) =>
                     updateMutation.mutate({
                       id: todo.id,
-                      status: event.target.checked ? "done" : "todo",
+                      payload: { status: event.target.value as TaskStatus },
                     })
                   }
+                >
+                  <option value="todo">To do</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="done">Done</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              {todo.descriptionHtml ? (
+                <div
+                  className="text-sm text-text"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(todo.descriptionHtml) }}
                 />
-                <span>
-                  <span>{todo.title}</span>
-                  <span className="mt-1 block text-xs text-muted">
-                    {todo.status} · {todo.priority}
-                    {todo.dueAt ? ` · due ${new Date(todo.dueAt).toLocaleDateString("en-CA")}` : ""}
-                    {todo.tags.length > 0 ? ` · #${todo.tags.join(" #")}` : ""}
-                  </span>
-                </span>
-              </label>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
+                  type="button"
+                  onClick={() => setEditingTask(todo)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
+                  type="button"
+                  onClick={() =>
+                    updateMutation.mutate({
+                      id: todo.id,
+                      payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
+                    })
+                  }
+                >
+                  {todo.archivedAt ? "Unarchive" : "Archive"}
+                </button>
+                <button
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
+                  type="button"
+                  onClick={() => deleteMutation.mutate(todo.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </Panel>
+          ))}
+        </div>
+      ) : null}
 
-              <button
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
-                type="button"
-                onClick={() => deleteMutation.mutate(todo.id)}
-              >
-                Delete
-              </button>
+      {items.length > 0 && layout === "board" ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {(Object.keys(boardGroups) as TaskStatus[]).map((status) => (
+            <Panel className="p-4" key={status}>
+              <p className="text-sm font-medium text-text">
+                {STATUS_LABELS[status]} ({boardGroups[status].length})
+              </p>
+              <div className="mt-3 space-y-3">
+                {boardGroups[status].map((todo) => (
+                  <div className="rounded border border-border bg-surface p-3" key={todo.id}>
+                    <p className="text-sm font-medium text-text">{todo.title}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {todo.priority}
+                      {todo.dueAt ? ` · due ${formatDueAt(todo.dueAt)}` : ""}
+                    </p>
+                    {todo.tags.length > 0 ? (
+                      <p className="mt-1 text-xs text-muted">#{todo.tags.join(" #")}</p>
+                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <select
+                        aria-label={`Board status for ${todo.title}`}
+                        value={todo.status}
+                        onChange={(event) =>
+                          updateMutation.mutate({
+                            id: todo.id,
+                            payload: { status: event.target.value as TaskStatus },
+                          })
+                        }
+                      >
+                        <option value="todo">To do</option>
+                        <option value="in_progress">In progress</option>
+                        <option value="done">Done</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <button
+                        className="rounded border border-border px-2 py-1 text-xs"
+                        type="button"
+                        onClick={() => setEditingTask(todo)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="rounded border border-border px-2 py-1 text-xs"
+                        type="button"
+                        onClick={() =>
+                          updateMutation.mutate({
+                            id: todo.id,
+                            payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
+                          })
+                        }
+                      >
+                        {todo.archivedAt ? "Unarchive" : "Archive"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </Panel>
           ))}
         </div>
