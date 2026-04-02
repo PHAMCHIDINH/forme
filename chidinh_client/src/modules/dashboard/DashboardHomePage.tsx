@@ -19,7 +19,7 @@ export function DashboardHomePage() {
           </p>
         </Panel>
 
-        <Panel className="p-6">
+        <Panel className="p-6" variant="muted">
           <p className="text-sm text-muted">Planned Module</p>
           <h3 className="mt-3 text-xl font-display text-text">Files</h3>
           <p className="mt-3 text-sm leading-6 text-muted">
@@ -27,7 +27,7 @@ export function DashboardHomePage() {
           </p>
         </Panel>
 
-        <Panel className="p-6">
+        <Panel className="p-6" variant="muted">
           <p className="text-sm text-muted">Planned Module</p>
           <h3 className="mt-3 text-xl font-display text-text">Automation</h3>
           <p className="mt-3 text-sm leading-6 text-muted">

@@ -44,4 +44,23 @@ describe("DashboardLayout", () => {
       expect(screen.getByRole("link", { name: item.label })).toBeInTheDocument();
     }
   });
+
+  it("renders planned dashboard modules on muted surfaces", async () => {
+    mockFetchSequence(jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }));
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/app"]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("heading", { name: /workspace overview/i });
+
+    for (const label of screen.getAllByText(/planned module/i)) {
+      expect(label.closest("div")).toHaveClass("bg-surfaceAlt");
+    }
+  });
 });
