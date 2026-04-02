@@ -7,9 +7,12 @@ import (
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/app"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
 	applogger "github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/logger"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load("../../.env", ".env")
+
 	cfg := config.Load()
 	logger := applogger.New(cfg.AppEnv)
 	slog.SetDefault(logger)

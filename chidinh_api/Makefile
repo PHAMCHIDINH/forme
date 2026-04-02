@@ -1,4 +1,4 @@
-GO ?= /mnt/c/Program\ Files/Go/bin/go.exe
+GO ?= go
 MIGRATE_ARGS ?= up
 
 .PHONY: migrate migrate-up migrate-status run test build
