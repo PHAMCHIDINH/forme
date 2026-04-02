@@ -1,33 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { EmptyState } from "../../shared/ui/EmptyState";
 import { Panel } from "../../shared/ui/Panel";
 import { SectionHeading } from "../../shared/ui/SectionHeading";
 import { createTodo, deleteTodo, listTodos, updateTodo } from "./api";
+import { TodoBoard } from "./TodoBoard";
+import { TodoForm } from "./TodoForm";
+import { TaskFormState, DEFAULT_FORM_STATE } from "./todoFormState";
+import { TodoList } from "./TodoList";
+import { TodoMetrics } from "./TodoMetrics";
+import { LayoutMode, TodoToolbar } from "./TodoToolbar";
 import { TAG_SUGGESTIONS } from "./tagSuggestions";
 import { CreateTaskInput, TaskItem, TaskListView, TaskPriority, TaskStatus, UpdateTaskInput } from "./taskTypes";
-
-type LayoutMode = "list" | "board";
-
-type TaskFormState = {
-  title: string;
-  descriptionHtml: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueOn: string;
-  tags: string[];
-};
-
-const APP_TIME_ZONE = "Asia/Ho_Chi_Minh";
-
-const DEFAULT_FORM_STATE: TaskFormState = {
-  title: "",
-  descriptionHtml: "",
-  status: "todo",
-  priority: "medium",
-  dueOn: "",
-  tags: [],
-};
+import { dateInputToIsoInAppZone, formatDateInputInAppZone, formatDueAt } from "./todoDate";
+import { addUniqueTags, parseTagInput } from "./todoTags";
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
   todo: "To do",
@@ -35,86 +22,6 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
   done: "Done",
   cancelled: "Cancelled",
 };
-
-const formatter = new Intl.DateTimeFormat("en-CA", {
-  timeZone: APP_TIME_ZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-function normalizeTag(value: string) {
-  return value.trim().toLowerCase();
-}
-
-function parseTagInput(value: string) {
-  return value
-    .split(",")
-    .map((part) => normalizeTag(part))
-    .filter(Boolean);
-}
-
-function addUniqueTags(existing: string[], next: string[]) {
-  const seen = new Set(existing);
-  const merged = [...existing];
-  for (const tag of next) {
-    if (seen.has(tag)) {
-      continue;
-    }
-    seen.add(tag);
-    merged.push(tag);
-  }
-  return merged;
-}
-
-function formatDateInputInAppZone(iso: string | null) {
-  if (!iso) {
-    return "";
-  }
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const parts = formatter.formatToParts(date);
-  const year = parts.find((part) => part.type === "year")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-
-  if (!year || !month || !day) {
-    return "";
-  }
-
-  return `${year}-${month}-${day}`;
-}
-
-function dateInputToIsoInAppZone(value: string) {
-  const [yearText, monthText, dayText] = value.split("-");
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-
-  if (!year || !month || !day) {
-    return undefined;
-  }
-
-  const utcMs = Date.UTC(year, month - 1, day, -7, 0, 0, 0);
-  return new Date(utcMs).toISOString();
-}
-
-function formatDueAt(iso: string | null) {
-  if (!iso) {
-    return null;
-  }
-
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return formatter.format(date);
-}
 
 function sanitizeRichText(html: string) {
   const withoutScripts = html
@@ -297,231 +204,50 @@ export function TodoPage() {
         description="Track active execution tasks inside the private workspace."
       />
 
-      <Panel className="p-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="space-y-2">
-            <label htmlFor="todo-view">View</label>
-            <select
-              id="todo-view"
-              value={view}
-              onChange={(event) => setView(event.target.value as TaskListView)}
-            >
-              <option value="active">All active</option>
-              <option value="today">Today</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="overdue">Overdue</option>
-              <option value="completed">Completed</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="todo-search">Search</label>
-            <input
-              id="todo-search"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search title, description, tags"
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="todo-layout">Layout</label>
-            <select
-              id="todo-layout"
-              value={layout}
-              onChange={(event) => setLayout(event.target.value as LayoutMode)}
-            >
-              <option value="list">List</option>
-              <option value="board">Board</option>
-            </select>
-          </div>
-        </div>
-      </Panel>
+      <TodoToolbar
+        view={view}
+        searchInput={searchInput}
+        layout={layout}
+        onViewChange={setView}
+        onSearchChange={setSearchInput}
+        onLayoutChange={setLayout}
+      />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Panel className="p-5">
-          <p className="text-sm text-muted">Tasks</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.total} total</p>
-        </Panel>
-        <Panel className="p-5">
-          <p className="text-sm text-muted">Open</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.open} open</p>
-        </Panel>
-        <Panel className="p-5">
-          <p className="text-sm text-muted">Completed</p>
-          <p className="mt-3 text-xl font-display text-text">{metrics.completed} complete</p>
-        </Panel>
-      </div>
+      <TodoMetrics total={metrics.total} open={metrics.open} completed={metrics.completed} />
 
-      <Panel className="p-6">
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-            <label htmlFor="todo-title">Task Title</label>
-            <input
-              id="todo-title"
-              placeholder="Add a new task"
-              value={formState.title}
-              onChange={(event) => {
-                setFormState((current) => ({ ...current, title: event.target.value }));
-                if (formError) {
-                  setFormError(null);
-                }
-              }}
-            />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="todo-due">Due date</label>
-              <input
-                id="todo-due"
-                type="date"
-                value={formState.dueOn}
-                onChange={(event) => setFormState((current) => ({ ...current, dueOn: event.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="todo-status">Status</label>
-              <select
-                id="todo-status"
-                value={formState.status}
-                onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value as TaskStatus }))}
-              >
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="done">Done</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="todo-priority">Priority</label>
-              <select
-                id="todo-priority"
-                value={formState.priority}
-                onChange={(event) =>
-                  setFormState((current) => ({ ...current, priority: event.target.value as TaskPriority }))
-                }
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="todo-tags">Tags</label>
-            <input
-              id="todo-tags"
-              value={tagInput}
-              placeholder="Type tag and press Enter or comma"
-              onChange={(event) => setTagInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === ",") {
-                  event.preventDefault();
-                  pushTags(tagInput);
-                  setTagInput("");
-                }
-              }}
-              onBlur={() => {
-                pushTags(tagInput);
-                setTagInput("");
-              }}
-            />
-            <div className="flex flex-wrap gap-2">
-              {TAG_SUGGESTIONS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className="rounded-full border border-border px-3 py-1 text-xs text-muted hover:bg-surfaceAlt"
-                  onClick={() => pushTags(tag)}
-                >
-                  + #{tag}
-                </button>
-              ))}
-            </div>
-            {formState.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {formState.tags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    className="rounded-full bg-surfaceAlt px-3 py-1 text-xs text-text"
-                    onClick={() =>
-                      setFormState((current) => ({
-                        ...current,
-                        tags: current.tags.filter((currentTag) => currentTag !== tag),
-                      }))
-                    }
-                  >
-                    #{tag} ×
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm text-muted">Description (rich text nhẹ)</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="rounded border border-border px-3 py-1 text-xs"
-                onClick={() => runDescriptionCommand("bold")}
-              >
-                B
-              </button>
-              <button
-                type="button"
-                className="rounded border border-border px-3 py-1 text-xs"
-                onClick={() => runDescriptionCommand("italic")}
-              >
-                I
-              </button>
-              <button
-                type="button"
-                className="rounded border border-border px-3 py-1 text-xs"
-                onClick={() => runDescriptionCommand("insertUnorderedList")}
-              >
-                UL
-              </button>
-            </div>
-            <div
-              ref={descriptionEditorRef}
-              role="textbox"
-              aria-label="Task description"
-              contentEditable
-              className="min-h-24 rounded border border-border bg-surface px-3 py-2 text-sm text-text"
-              onInput={(event) => {
-                const value = sanitizeRichText(event.currentTarget.innerHTML);
-                setFormState((current) => ({ ...current, descriptionHtml: value }));
-              }}
-            />
-          </div>
-
-          {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {editingTaskId ? (updateMutation.isPending ? "Saving..." : "Save Task") : createMutation.isPending ? "Adding..." : "Add Task"}
-            </button>
-            {editingTaskId ? (
-              <button
-                className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-5 py-3 text-sm text-text transition hover:bg-surfaceAlt"
-                type="button"
-                onClick={clearForm}
-              >
-                Cancel Edit
-              </button>
-            ) : null}
-          </div>
-        </form>
-      </Panel>
+      <TodoForm
+        formState={formState}
+        tagInput={tagInput}
+        tagSuggestions={TAG_SUGGESTIONS}
+        formError={formError}
+        editingTaskId={editingTaskId}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+        descriptionEditorRef={descriptionEditorRef}
+        onSubmit={handleSubmit}
+        onTitleChange={(value) => {
+          setFormState((current) => ({ ...current, title: value }));
+          if (formError) {
+            setFormError(null);
+          }
+        }}
+        onDueOnChange={(value) => setFormState((current) => ({ ...current, dueOn: value }))}
+        onStatusChange={(value) => setFormState((current) => ({ ...current, status: value }))}
+        onPriorityChange={(value) => setFormState((current) => ({ ...current, priority: value }))}
+        onTagInputChange={setTagInput}
+        onPushTags={pushTags}
+        onRemoveTag={(tag) =>
+          setFormState((current) => ({
+            ...current,
+            tags: current.tags.filter((currentTag) => currentTag !== tag),
+          }))
+        }
+        onDescriptionCommand={runDescriptionCommand}
+        onDescriptionInput={(html) => {
+          const value = sanitizeRichText(html);
+          setFormState((current) => ({ ...current, descriptionHtml: value }));
+        }}
+        onCancelEdit={clearForm}
+      />
 
       {todosQuery.isLoading ? (
         <Panel className="p-6">
@@ -536,142 +262,45 @@ export function TodoPage() {
       ) : null}
 
       {!todosQuery.isLoading && !todosQuery.isError && items.length === 0 ? (
-        <Panel className="p-8 text-center">
-          <p className="font-display text-2xl text-text">No tasks in this view yet.</p>
-          <p className="mt-2 text-sm text-muted">
-            Add your first item to start shaping the workspace rhythm.
-          </p>
+        <Panel className="p-8">
+          <EmptyState
+            title="No tasks in this view yet."
+            description="Add your first item to start shaping the workspace rhythm."
+          />
         </Panel>
       ) : null}
 
       {items.length > 0 && layout === "list" ? (
-        <div className="space-y-3">
-          {items.map((todo) => (
-            <Panel className="space-y-3 p-5" key={todo.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-text">{todo.title}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    {todo.status} · {todo.priority}
-                    {todo.dueAt ? ` · due ${formatDueAt(todo.dueAt)}` : ""}
-                    {todo.tags.length > 0 ? ` · #${todo.tags.join(" #")}` : ""}
-                  </p>
-                </div>
-                <select
-                  aria-label={`Status for ${todo.title}`}
-                  value={todo.status}
-                  onChange={(event) =>
-                    updateMutation.mutate({
-                      id: todo.id,
-                      payload: { status: event.target.value as TaskStatus },
-                    })
-                  }
-                >
-                  <option value="todo">To do</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="done">Done</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-              {todo.descriptionHtml ? (
-                <div
-                  className="text-sm text-text"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(todo.descriptionHtml) }}
-                />
-              ) : null}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
-                  type="button"
-                  onClick={() => setEditingTask(todo)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
-                  type="button"
-                  onClick={() =>
-                    updateMutation.mutate({
-                      id: todo.id,
-                      payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
-                    })
-                  }
-                >
-                  {todo.archivedAt ? "Unarchive" : "Archive"}
-                </button>
-                <button
-                  className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-4 py-2 text-sm text-text transition hover:bg-surfaceAlt"
-                  type="button"
-                  onClick={() => deleteMutation.mutate(todo.id)}
-                >
-                  Delete
-                </button>
-              </div>
-            </Panel>
-          ))}
-        </div>
+        <TodoList
+          items={items}
+          formatDueAt={formatDueAt}
+          sanitizeRichText={sanitizeRichText}
+          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: { status } })}
+          onEdit={setEditingTask}
+          onToggleArchive={(todo) =>
+            updateMutation.mutate({
+              id: todo.id,
+              payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
+            })
+          }
+          onDelete={(id) => deleteMutation.mutate(id)}
+        />
       ) : null}
 
       {items.length > 0 && layout === "board" ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {(Object.keys(boardGroups) as TaskStatus[]).map((status) => (
-            <Panel className="p-4" key={status}>
-              <p className="text-sm font-medium text-text">
-                {STATUS_LABELS[status]} ({boardGroups[status].length})
-              </p>
-              <div className="mt-3 space-y-3">
-                {boardGroups[status].map((todo) => (
-                  <div className="rounded border border-border bg-surface p-3" key={todo.id}>
-                    <p className="text-sm font-medium text-text">{todo.title}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      {todo.priority}
-                      {todo.dueAt ? ` · due ${formatDueAt(todo.dueAt)}` : ""}
-                    </p>
-                    {todo.tags.length > 0 ? (
-                      <p className="mt-1 text-xs text-muted">#{todo.tags.join(" #")}</p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <select
-                        aria-label={`Board status for ${todo.title}`}
-                        value={todo.status}
-                        onChange={(event) =>
-                          updateMutation.mutate({
-                            id: todo.id,
-                            payload: { status: event.target.value as TaskStatus },
-                          })
-                        }
-                      >
-                        <option value="todo">To do</option>
-                        <option value="in_progress">In progress</option>
-                        <option value="done">Done</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      <button
-                        className="rounded border border-border px-2 py-1 text-xs"
-                        type="button"
-                        onClick={() => setEditingTask(todo)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="rounded border border-border px-2 py-1 text-xs"
-                        type="button"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            id: todo.id,
-                            payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
-                          })
-                        }
-                      >
-                        {todo.archivedAt ? "Unarchive" : "Archive"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          ))}
-        </div>
+        <TodoBoard
+          boardGroups={boardGroups}
+          statusLabels={STATUS_LABELS}
+          formatDueAt={formatDueAt}
+          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: { status } })}
+          onEdit={setEditingTask}
+          onToggleArchive={(todo) =>
+            updateMutation.mutate({
+              id: todo.id,
+              payload: { archivedAt: todo.archivedAt ? null : new Date().toISOString() },
+            })
+          }
+        />
       ) : null}
     </section>
   );
