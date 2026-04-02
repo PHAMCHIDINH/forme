@@ -24,6 +24,8 @@ describe("DashboardLayout", () => {
     expect(screen.getByRole("navigation", { name: /dashboard navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /public hub/i })).toBeInTheDocument();
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /overview context toolbar/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /module deck toolbar/i })).toBeInTheDocument();
   });
 
   it("renders shell navigation from shared config", async () => {

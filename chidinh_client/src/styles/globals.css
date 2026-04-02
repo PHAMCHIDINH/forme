@@ -1,27 +1,49 @@
 @import "tailwindcss";
-:root {
-  /* Semantic source of truth for the active calm workspace direction. */
-  --background: #f5f1ea;
-  --foreground: #1f2933;
-  --card: #fffdfa;
-  --card-foreground: #1f2933;
-  --popover: #fffdfa;
-  --popover-foreground: #1f2933;
-  --primary: #365f63;
-  --primary-foreground: #fffdfa;
-  --secondary: #ebe5da;
-  --secondary-foreground: #1f2933;
-  --muted: #52606d;
-  --muted-foreground: #52606d;
-  --accent: #365f63;
-  --accent-foreground: #fffdfa;
-  --destructive: #9b4a4a;
-  --destructive-foreground: #fffdfa;
-  --border: rgba(31, 41, 51, 0.12);
-  --input: rgba(31, 41, 51, 0.12);
-  --ring: rgba(54, 95, 99, 0.45);
 
-  /* Legacy aliases kept only as a migration bridge for existing utilities. */
+:root {
+  /* Semantic source of truth for the first-slice balanced retro contract. */
+  --background: #f2ece3;
+  --foreground: #1e252c;
+  --card: #fffcf6;
+  --card-foreground: #1e252c;
+  --popover: #fffdf8;
+  --popover-foreground: #1e252c;
+  --primary: #315f63;
+  --primary-foreground: #fffdf8;
+  --secondary: #ebe1d2;
+  --secondary-foreground: #1e252c;
+  --muted: #596572;
+  --muted-foreground: #596572;
+  --accent: #315f63;
+  --accent-foreground: #fffdf8;
+  --destructive: #9d4d4d;
+  --destructive-foreground: #fffdf8;
+  --border: #c8c0b3;
+  --input: #b8aea0;
+  --ring: rgba(49, 95, 99, 0.45);
+
+  /* First slice primitives. */
+  --surface-canvas: #f2ece3;
+  --surface-shell: #f9f4ea;
+  --surface-panel: #fffdf8;
+  --surface-panel-muted: #f4ecdf;
+  --surface-panel-featured: #f7efe0;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  --border-strong: #6c6155;
+  --border-default: #c8c0b3;
+  --border-subtle: #ddd5c8;
+
+  --shadow-crisp-sm: 0 1px 0 0 rgba(30, 37, 44, 0.22);
+  --shadow-crisp-md: 0 2px 0 0 rgba(30, 37, 44, 0.22);
+  --shadow-crisp-lg: 0 3px 0 0 rgba(30, 37, 44, 0.22);
+
+  --focus-ring: 0 0 0 2px rgba(242, 236, 227, 0.95), 0 0 0 4px rgba(49, 95, 99, 0.55);
+
+  /* Legacy aliases kept only as migration bridges for existing utilities. */
   --color-base: var(--background);
   --color-surface: var(--card);
   --color-text: var(--foreground);
@@ -30,14 +52,23 @@
   --color-border: var(--border);
 }
 
-@theme {
-  --font-head: "Georgia", Cambria, "Times New Roman", serif;
-  --font-display: "Georgia", Cambria, "Times New Roman", serif;
-  --font-sans: "Segoe UI", system-ui, sans-serif;
+:root[data-ui-reduction="true"] {
+  --shadow-crisp-sm: 0 1px 0 0 rgba(30, 37, 44, 0.12);
+  --shadow-crisp-md: 0 1px 0 0 rgba(30, 37, 44, 0.14);
+  --shadow-crisp-lg: 0 2px 0 0 rgba(30, 37, 44, 0.16);
+  --surface-panel-muted: #f6f0e6;
+  --surface-panel-featured: #f5eddf;
+  --border-default: #d5cdc0;
+}
 
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+@theme {
+  --font-head: "Bree Serif", "Rockwell", "Georgia", serif;
+  --font-display: "Bree Serif", "Rockwell", "Georgia", serif;
+  --font-sans: "Averta", "Segoe UI", "Trebuchet MS", sans-serif;
+
+  --shadow-sm: var(--shadow-crisp-sm);
+  --shadow-md: var(--shadow-crisp-md);
+  --shadow-lg: var(--shadow-crisp-lg);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -77,14 +108,15 @@
 
   body {
     margin: 0;
-    background-color: var(--background);
+    background-color: var(--surface-canvas);
     color: var(--foreground);
-    font-family: "Segoe UI", system-ui, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-image:
-      radial-gradient(circle at top left, rgba(54, 95, 99, 0.08), transparent 35%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 253, 250, 0.92));
+      radial-gradient(circle at top left, rgba(49, 95, 99, 0.06), transparent 34%),
+      radial-gradient(circle at 85% -12%, rgba(124, 102, 72, 0.08), transparent 44%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(252, 247, 239, 0.9));
   }
 
   a {
@@ -93,24 +125,36 @@
   }
 
   button,
-  input {
+  input,
+  select {
     font: inherit;
   }
 
-  input {
+  input,
+  select {
     width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    background: #fff;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-panel);
     color: var(--foreground);
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     outline: none;
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
-  input:focus {
+  input::placeholder {
+    color: rgba(89, 101, 114, 0.92);
+  }
+
+  input:hover,
+  select:hover {
+    border-color: var(--border-strong);
+  }
+
+  input:focus-visible,
+  select:focus-visible {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(54, 95, 99, 0.15);
+    box-shadow: var(--focus-ring);
   }
 
   button {

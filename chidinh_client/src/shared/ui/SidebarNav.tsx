@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { LogOut, LayoutGrid, CheckSquare, Settings } from "lucide-react";
+
+import { Button } from "./Button";
+import { Panel } from "./Panel";
 
 type NavItem = {
   label: string;
   to: string;
   end?: boolean;
-  icon: any;
 };
 
 type Props = {
@@ -17,55 +18,47 @@ type Props = {
 };
 
 export function SidebarNav({ ariaLabel, items, operatorName, onLogout, isLoggingOut }: Props) {
-  const initals = operatorName.slice(0, 2).toUpperCase();
-
   return (
-    <aside className="w-20 border-r-4 border-black bg-card z-30 flex flex-col h-screen fixed left-0 top-0 pt-4 pb-4">
-      <div className="flex justify-center mb-8">
-        <div className="w-12 h-12 bg-primary border-4 border-black shadow-[4px_4px_0_0_#000] flex items-center justify-center font-head text-primary-foreground font-bold text-xl uppercase cursor-pointer" title="Personal Workspace">
-          PS
-        </div>
+    <Panel className="flex h-fit min-h-[calc(100vh-3rem)] flex-col p-5" variant="shell">
+      <div className="space-y-1 border-b border-[var(--border-subtle)] pb-4">
+        <p className="text-xs uppercase tracking-[0.16em] text-accent">Private Hub</p>
+        <h1 className="font-display text-[1.6rem] text-foreground">Workspace</h1>
       </div>
 
-      <nav aria-label={ariaLabel} className="flex-1 overflow-y-auto px-3 flex flex-col gap-4 items-center">
+      <nav aria-label={ariaLabel} className="mt-4 flex flex-col gap-2">
         {items.map((item) => (
           <NavLink
             key={`${item.label}-${item.to}`}
             to={item.to}
             end={item.end}
-            title={item.label}
             className={({ isActive }) =>
-              `p-3 border-4 transition-all flex items-center justify-center w-14 h-14 ${
+              `group rounded-[var(--radius-md)] border px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] ${
                 isActive
-                  ? "bg-primary text-primary-foreground border-black shadow-[4px_4px_0_0_#000] -translate-y-1"
-                  : "bg-[#fffdfa] text-muted-foreground border-transparent hover:border-black hover:text-foreground hover:shadow-[4px_4px_0_0_#000] hover:-translate-y-1"
+                  ? "border-[var(--border-strong)] bg-[var(--surface-panel-featured)] text-foreground shadow-sm"
+                  : "border-transparent text-muted-foreground hover:border-[var(--border-default)] hover:bg-[var(--surface-panel)] hover:text-foreground"
               }`
             }
           >
-            <item.icon size={28} strokeWidth={2.5} />
+            {item.label}
           </NavLink>
         ))}
       </nav>
 
-      <div className="px-3 flex flex-col gap-4 items-center mt-auto">
-        <button
-          aria-label={`Người dùng ${operatorName}`}
-          className="w-14 h-14 bg-muted border-4 border-transparent hover:border-black text-foreground rounded-full flex items-center justify-center font-head font-bold text-xl uppercase transition-all shadow-none hover:shadow-[4px_4px_0_0_#000] hover:-translate-y-1 shrink-0"
-          title={`User: ${operatorName}`}
-        >
-          {initals}
-        </button>
-
-        <button
-          aria-label="Đăng Xuất"
-          className="w-14 h-14 bg-destructive text-destructive-foreground border-4 border-transparent hover:border-black flex items-center justify-center transition-all shadow-none hover:shadow-[4px_4px_0_0_#000] hover:-translate-y-1 disabled:opacity-50 shrink-0"
-          title="Đăng Xuất"
+      <div className="mt-auto space-y-3 border-t border-[var(--border-subtle)] pt-4">
+        <p className="truncate text-sm text-muted-foreground" title={operatorName}>
+          {operatorName}
+        </p>
+        <Button
+          className="w-full"
+          variant="secondary"
+          type="button"
           onClick={onLogout}
           disabled={isLoggingOut}
+          pending={isLoggingOut}
         >
-          <LogOut size={26} strokeWidth={3} />
-        </button>
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </Button>
       </div>
-    </aside>
+    </Panel>
   );
 }
