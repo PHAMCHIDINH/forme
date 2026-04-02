@@ -2,6 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
+import { Button } from "../../shared/ui/Button";
+import { Field, FieldLabel, FieldMessage } from "../../shared/ui/Field";
+import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
 import { loginSchema, type LoginFormValues } from "./loginSchema";
 import { useLogin } from "./useSession";
@@ -49,38 +52,39 @@ export function LoginPage() {
 
         <Panel className="p-8 lg:p-10">
           <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-2">
-              <label htmlFor="username">Username</label>
-              <input id="username" autoComplete="username" {...register("username")} />
+            <Field>
+              <FieldLabel htmlFor="username">Username</FieldLabel>
+              <Input id="username" autoComplete="username" {...register("username")} />
               {errors.username ? (
-                <p className="text-sm text-red-700">{errors.username.message}</p>
+                <FieldMessage tone="error">{errors.username.message}</FieldMessage>
               ) : null}
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <label htmlFor="password">Password</label>
-              <input
+            <Field>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 {...register("password")}
               />
               {errors.password ? (
-                <p className="text-sm text-red-700">{errors.password.message}</p>
+                <FieldMessage tone="error">{errors.password.message}</FieldMessage>
               ) : null}
-            </div>
+            </Field>
 
             {loginMutation.isError ? (
-              <p className="text-sm text-red-700">Invalid credentials. Please try again.</p>
+              <FieldMessage tone="error">Invalid credentials. Please try again.</FieldMessage>
             ) : null}
 
-            <button
-              className="inline-flex w-full items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+            <Button
+              className="w-full"
               type="submit"
               disabled={loginMutation.isPending}
+              pending={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Opening Workspace..." : "Enter Workspace"}
-            </button>
+            </Button>
           </form>
         </Panel>
       </div>

@@ -21,3 +21,8 @@ the Personal Digital Hub.
   Recommended implementation phases, milestones, and release checklist.
 - `superpowers/plans/2026-03-31-personal-digital-hub-mvp1.md`
   Implementation plan with task breakdown for engineering execution.
+- `superpowers/specs/2026-04-02-forme-ui-primitive-inventory.md`
+  UI primitive inventory/taxonomy and prototype freeze boundaries for the
+  frontend rebuild.
+- `superpowers/plans/2026-04-02-forme-frontend-rebuild-completion.md`
+  Full implementation plan for finishing frontend rebuild phases 2-6.

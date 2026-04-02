@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
+import { Button } from "../../shared/ui/Button";
 import { Panel } from "../../shared/ui/Panel";
 import { useLogout, useSession } from "../auth/useSession";
 
@@ -36,14 +37,15 @@ export function DashboardLayout() {
 
           <div className="mt-auto space-y-3 border-t border-border pt-6">
             <p className="text-sm text-muted">{sessionQuery.data?.user.displayName ?? "Owner"}</p>
-            <button
-              className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-5 py-3 text-sm font-medium text-text transition hover:bg-surfaceAlt disabled:cursor-not-allowed disabled:opacity-70"
+            <Button
+              variant="secondary"
               type="button"
               onClick={handleLogout}
               disabled={logoutMutation.isPending}
+              pending={logoutMutation.isPending}
             >
               {logoutMutation.isPending ? "Closing..." : "Logout"}
-            </button>
+            </Button>
           </div>
         </Panel>
 

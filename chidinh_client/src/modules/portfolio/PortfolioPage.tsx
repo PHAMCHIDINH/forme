@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { Button } from "../../shared/ui/Button";
 import { Panel } from "../../shared/ui/Panel";
 import { SectionHeading } from "../../shared/ui/SectionHeading";
@@ -17,14 +19,16 @@ export function PortfolioPage() {
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted">{portfolioData.intro}</p>
             <div className="flex flex-wrap gap-3">
-              <Button to="/#systems">Explore Systems</Button>
-              <Button to="/login" variant="secondary">
-                Enter Workspace
+              <Button asChild>
+                <Link to="/#systems">Explore Systems</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link to="/login">Enter Workspace</Link>
               </Button>
             </div>
           </div>
 
-          <Panel className="bg-surfaceAlt p-6">
+          <Panel className="p-6" variant="muted">
             <p className="text-sm text-muted">Role</p>
             <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
             <p className="mt-4 text-sm leading-7 text-muted">

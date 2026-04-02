@@ -1,5 +1,6 @@
 @import "tailwindcss";
 :root {
+  /* Semantic source of truth for the active calm workspace direction. */
   --background: #f5f1ea;
   --foreground: #1f2933;
   --card: #fffdfa;
@@ -20,7 +21,7 @@
   --input: rgba(31, 41, 51, 0.12);
   --ring: rgba(54, 95, 99, 0.45);
 
-  /* Legacy aliases kept for the older utility names still used in the app. */
+  /* Legacy aliases kept only as a migration bridge for existing utilities. */
   --color-base: var(--background);
   --color-surface: var(--card);
   --color-surface-alt: var(--secondary);
