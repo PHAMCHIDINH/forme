@@ -14,10 +14,10 @@ jobs:
         working-directory: chidinh_client
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: "npm"
@@ -42,7 +42,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: goclaw
-          POSTGRES_PASSWORD: goclaw
+          POSTGRES_PASSWORD: 05b23c710055bce2147f4f58a84cd252
           POSTGRES_DB: goclaw
         ports:
           - 5432:5432
@@ -53,21 +53,21 @@ jobs:
           --health-retries=5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: chidinh_api/go.mod
           cache-dependency-path: chidinh_api/go.sum
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://goclaw:goclaw@127.0.0.1:5432/goclaw?sslmode=disable
+          DATABASE_URL: postgresql://goclaw:05b23c710055bce2147f4f58a84cd252@127.0.0.1:5432/goclaw?sslmode=disable
           DB_HOST: 127.0.0.1
           DB_PORT: "5432"
           DB_USER: goclaw
-          DB_PASSWORD: goclaw
+          DB_PASSWORD: 05b23c710055bce2147f4f58a84cd252
           DB_NAME: goclaw
         run: go test ./...
 
