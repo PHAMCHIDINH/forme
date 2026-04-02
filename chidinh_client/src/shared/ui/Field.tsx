@@ -1,5 +1,6 @@
 import * as Label from "@radix-ui/react-label";
 import type { PropsWithChildren } from "react";
+import { InlineFeedback } from "./InlineFeedback";
 
 type FieldProps = PropsWithChildren<{
   className?: string;
@@ -25,7 +26,9 @@ export function FieldMessage({
   className = "",
   tone = "default",
 }: FieldMessageProps) {
-  const toneClass = tone === "error" ? "text-red-700" : "text-muted";
-
-  return <p className={`text-sm ${toneClass} ${className}`.trim()}>{children}</p>;
+  return (
+    <InlineFeedback className={className} tone={tone}>
+      {children}
+    </InlineFeedback>
+  );
 }

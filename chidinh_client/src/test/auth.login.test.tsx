@@ -52,4 +52,25 @@ describe("LoginPage", () => {
       password: "swordfish",
     });
   });
+
+  it("shows invalid credential feedback as an alert", async () => {
+    mockFetchSequence(
+      jsonResponse(
+        null,
+        {
+          error: { code: "INVALID_CREDENTIALS", message: "Invalid credentials" },
+          status: 401,
+        },
+      ),
+    );
+    const user = userEvent.setup();
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText(/username/i), "ada");
+    await user.type(screen.getByLabelText(/password/i), "wrong");
+    await user.click(screen.getByRole("button", { name: /enter workspace/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid credentials/i);
+  });
 });
