@@ -16,11 +16,13 @@ const panelVariants = cva("rounded-[28px] border shadow-panel", {
 type Props = PropsWithChildren<
   VariantProps<typeof panelVariants> & {
     className?: string;
-  }
+  } & React.HTMLAttributes<HTMLDivElement>
 >;
 
-export function Panel({ children, className = "", variant }: Props) {
+export function Panel({ children, className = "", variant, ...props }: Props) {
   return (
-    <div className={panelVariants({ variant, className })}>{children}</div>
+    <div className={panelVariants({ variant, className })} {...props}>
+      {children}
+    </div>
   );
 }
