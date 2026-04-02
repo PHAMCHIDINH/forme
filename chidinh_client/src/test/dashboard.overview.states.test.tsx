@@ -9,10 +9,10 @@ describe("Dashboard overview empty-state", () => {
     const user = userEvent.setup();
     render(<DashboardHomePage />);
 
-    await user.click(screen.getByRole("button", { name: /planned next-cycle surfaces/i }));
+    await user.click(screen.getByRole("button", { name: /^planned$/i }));
     await user.selectOptions(screen.getByLabelText(/module state/i), "live");
 
-    expect(screen.getByText(/No modules match this context/i)).toBeInTheDocument();
+    expect(screen.getByText(/No modules match this view/i)).toBeInTheDocument();
   });
 
   test("renders a second toolbar instance without local rescue markers", () => {

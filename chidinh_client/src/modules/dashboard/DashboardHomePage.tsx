@@ -22,13 +22,13 @@ const MODULES: ModuleCard[] = [
   {
     title: "Files",
     state: "planned",
-    description: "Reserve space for asset organization and operational references.",
+    description: "Store references, working notes, and project assets.",
     metric: "0 linked collections",
   },
   {
     title: "Automation",
     state: "planned",
-    description: "Prepare the shell for recurring workflows and assistant-driven tasks.",
+    description: "Schedule recurring checks and routine workspace updates.",
     metric: "No automations configured",
   },
 ];
@@ -76,7 +76,7 @@ export function DashboardHomePage() {
       <SectionHeading
         eyebrow="Workspace"
         title="Workspace Overview"
-        description="A summary-first operating surface with shared context and action grammar for modules."
+        description="Track active modules, planned capabilities, and quick actions in one place."
       />
 
       <ContextToolbar
@@ -84,20 +84,20 @@ export function DashboardHomePage() {
         scopeOptions={[
           { value: "all", label: "All Modules" },
           { value: "active", label: "Live Now" },
-          { value: "planned", label: "Planned Next-Cycle Surfaces" },
+          { value: "planned", label: "Planned" },
         ]}
         selectedScope={scope}
         onScopeChange={setScope}
         filterLabel="Module state"
         filters={[
           { value: "all", label: "Any state" },
-          { value: "live", label: "Live state" },
-          { value: "planned", label: "Planned state" },
+          { value: "live", label: "Live" },
+          { value: "planned", label: "Planned" },
         ]}
         selectedFilter={statusFilter}
         onFilterChange={setStatusFilter}
         searchValue={query}
-        searchPlaceholder="Search module summaries"
+        searchPlaceholder="Search modules"
         onSearchChange={setQuery}
         secondaryActions={[
           {
@@ -121,17 +121,16 @@ export function DashboardHomePage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel className="p-5 lg:col-span-2" variant="featured">
-          <p className="text-xs uppercase tracking-[0.16em] text-accent">Featured summary</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-accent">Today</p>
           <h3 className="mt-2 font-display text-2xl text-foreground">Overview Health</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            One featured card is used to anchor the page. Remaining module cards stay neutral to preserve
-            scanability.
+            Keep your active modules in view and quickly move from summary to action.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Button size="sm" variant="secondary" disabled>
-              Secondary Disabled
+              Share Snapshot
             </Button>
-            <Button size="sm">Primary Action</Button>
+            <Button size="sm">Open Summary</Button>
           </div>
         </Panel>
 
@@ -144,9 +143,9 @@ export function DashboardHomePage() {
 
       {visibleModules.length === 0 ? (
         <Panel className="space-y-2 p-5" variant="muted">
-          <p className="text-sm font-semibold text-foreground">No modules match this context</p>
+          <p className="text-sm font-semibold text-foreground">No modules match this view</p>
           <p className="text-sm text-muted-foreground">
-            This empty state is intentional for ugly-state validation of the overview pattern.
+            Try a different scope or clear filters to bring modules back into view.
           </p>
           <Button size="sm" variant="secondary" onClick={handleReset}>
             Clear Filters
@@ -157,8 +156,8 @@ export function DashboardHomePage() {
           <ContextToolbar
             ariaLabel="Module deck toolbar"
             scopeOptions={[
-              { value: "cards", label: "Card Deck" },
-              { value: "signals", label: "Signal Focus" },
+              { value: "cards", label: "Cards" },
+              { value: "signals", label: "Signals" },
             ]}
             selectedScope={moduleDeck}
             onScopeChange={setModuleDeck}
@@ -176,22 +175,22 @@ export function DashboardHomePage() {
           />
 
           <div className="grid gap-3 lg:grid-cols-3">
-          {visibleModules.map((module) => (
-            <Panel
-              className="p-5"
-              key={module.title}
-              variant={module.state === "planned" ? "muted" : "default"}
-            >
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                {module.state === "live" ? "Live Module" : "Planned Module"}
-              </p>
-              <h3 className="mt-2 text-xl font-display text-foreground">{module.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{module.description}</p>
-              <p className="mt-4 border-t border-[var(--border-subtle)] pt-3 text-xs text-muted-foreground">
-                {module.metric}
-              </p>
-            </Panel>
-          ))}
+            {visibleModules.map((module) => (
+              <Panel
+                className="p-5"
+                key={module.title}
+                variant={module.state === "planned" ? "muted" : "default"}
+              >
+                <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                  {module.state === "live" ? "Live Module" : "Planned Module"}
+                </p>
+                <h3 className="mt-2 text-xl font-display text-foreground">{module.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{module.description}</p>
+                <p className="mt-4 border-t border-[var(--border-subtle)] pt-3 text-xs text-muted-foreground">
+                  {module.metric}
+                </p>
+              </Panel>
+            ))}
           </div>
         </div>
       )}

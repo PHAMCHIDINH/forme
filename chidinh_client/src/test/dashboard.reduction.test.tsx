@@ -13,7 +13,7 @@ describe("Dashboard reduction mode", () => {
 
     render(<DashboardHomePage />);
 
-    expect(screen.getByText(/Featured summary/i)).toBeInTheDocument();
+    expect(screen.getByText("Today")).toBeInTheDocument();
     expect(screen.getAllByText(/Planned Module/i).length).toBeGreaterThan(0);
   });
 });
