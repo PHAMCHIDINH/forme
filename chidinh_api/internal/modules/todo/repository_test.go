@@ -214,13 +214,77 @@ func TestListWithOptionsSearchAndTagFiltersMatchTitleDescriptionAndTags(t *testi
 	}
 }
 
+func TestListWithOptionsTodayUpcomingOverdueUseBusinessDayBoundaries(t *testing.T) {
+	repo, dbConn := newTestRepository(t)
+	ctx := context.Background()
+	now := time.Now().In(businessLocation)
+	year, month, day := now.Date()
+
+	ownerID := seedOwnerAndTodos(t, dbConn, []todoSeed{
+		{
+			ID:        "11111111-1111-1111-1111-111111111111",
+			Title:     "Earlier today",
+			Status:    "todo",
+			Priority:  "medium",
+			DueAt:     businessTime(t, year, month, day, 1, 0),
+			CreatedAt: businessTime(t, year, month, day, 0, 0),
+			UpdatedAt: businessTime(t, year, month, day, 0, 0),
+		},
+		{
+			ID:        "22222222-2222-2222-2222-222222222222",
+			Title:     "Later today",
+			Status:    "todo",
+			Priority:  "medium",
+			DueAt:     businessTime(t, year, month, day, 23, 59),
+			CreatedAt: businessTime(t, year, month, day, 0, 0),
+			UpdatedAt: businessTime(t, year, month, day, 0, 0),
+		},
+		{
+			ID:        "33333333-3333-3333-3333-333333333333",
+			Title:     "Yesterday",
+			Status:    "todo",
+			Priority:  "medium",
+			DueAt:     businessTime(t, year, month, day-1, 23, 59),
+			CreatedAt: businessTime(t, year, month, day-1, 0, 0),
+			UpdatedAt: businessTime(t, year, month, day-1, 0, 0),
+		},
+		{
+			ID:        "44444444-4444-4444-4444-444444444444",
+			Title:     "Tomorrow",
+			Status:    "todo",
+			Priority:  "medium",
+			DueAt:     businessTime(t, year, month, day+1, 0, 1),
+			CreatedAt: businessTime(t, year, month, day+1, 0, 0),
+			UpdatedAt: businessTime(t, year, month, day+1, 0, 0),
+		},
+	})
+
+	todayGot, err := repo.ListWithOptions(ctx, ownerID, ListOptions{View: "today"})
+	if err != nil {
+		t.Fatalf("expected today list to succeed, got error: %v", err)
+	}
+	assertTodoIDs(t, todayGot, "11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222")
+
+	upcomingGot, err := repo.ListWithOptions(ctx, ownerID, ListOptions{View: "upcoming"})
+	if err != nil {
+		t.Fatalf("expected upcoming list to succeed, got error: %v", err)
+	}
+	assertTodoIDs(t, upcomingGot, "44444444-4444-4444-4444-444444444444")
+
+	overdueGot, err := repo.ListWithOptions(ctx, ownerID, ListOptions{View: "overdue"})
+	if err != nil {
+		t.Fatalf("expected overdue list to succeed, got error: %v", err)
+	}
+	assertTodoIDs(t, overdueGot, "33333333-3333-3333-3333-333333333333")
+}
+
 func TestRepositoryCreateV2PersistsRichFields(t *testing.T) {
 	repo, dbConn := newTestRepository(t)
 	ctx := context.Background()
 	ownerID := seedOwnerAndTodos(t, dbConn, nil)
 
 	dueAt := mustTimeValue(t, "2026-04-03T09:00:00Z")
-	completedAt := mustTimeValue(t, "2026-04-03T10:00:00Z")
+	suppliedCompletedAt := mustTimeValue(t, "2026-04-03T10:00:00Z")
 	archivedAt := mustTimeValue(t, "2026-04-04T11:00:00Z")
 	got, err := repo.CreateV2(ctx, ownerID, CreateParams{
 		Title:           "Ship release",
@@ -229,7 +293,7 @@ func TestRepositoryCreateV2PersistsRichFields(t *testing.T) {
 		Priority:        PriorityHigh,
 		DueAt:           &dueAt,
 		Tags:            []string{"work", "release"},
-		CompletedAt:     &completedAt,
+		CompletedAt:     &suppliedCompletedAt,
 		ArchivedAt:      &archivedAt,
 	})
 	if err != nil {
@@ -255,8 +319,11 @@ func TestRepositoryCreateV2PersistsRichFields(t *testing.T) {
 	if len(row.Tags) != 2 || row.Tags[0] != "work" || row.Tags[1] != "release" {
 		t.Fatalf("expected tags to persist, got %#v", row.Tags)
 	}
-	if row.CompletedAt == nil || !row.CompletedAt.Equal(completedAt) {
-		t.Fatalf("expected completed_at to persist, got %#v", row.CompletedAt)
+	if row.CompletedAt == nil {
+		t.Fatal("expected completed_at to be server-managed")
+	}
+	if row.CompletedAt.Equal(suppliedCompletedAt) {
+		t.Fatalf("expected completed_at to ignore caller input, got %#v", row.CompletedAt)
 	}
 	if row.ArchivedAt == nil || !row.ArchivedAt.Equal(archivedAt) {
 		t.Fatalf("expected archived_at to persist, got %#v", row.ArchivedAt)
@@ -281,7 +348,7 @@ func TestRepositoryUpdateV2PersistsRichFields(t *testing.T) {
 	})
 
 	dueAt := mustTimeValue(t, "2026-04-05T12:00:00Z")
-	completedAt := mustTimeValue(t, "2026-04-05T13:00:00Z")
+	suppliedCompletedAt := mustTimeValue(t, "2026-04-05T13:00:00Z")
 	archivedAt := mustTimeValue(t, "2026-04-06T14:00:00Z")
 	got, err := repo.UpdateV2(ctx, ownerID, "dddddddd-dddd-dddd-dddd-dddddddddddd", UpdateParams{
 		Title:           NewPatchValue("Updated spec"),
@@ -290,7 +357,7 @@ func TestRepositoryUpdateV2PersistsRichFields(t *testing.T) {
 		Priority:        NewPatchValue(PriorityLow),
 		DueAt:           NewPatchValue(dueAt),
 		Tags:            NewPatchValue([]string{"release", "work"}),
-		CompletedAt:     NewPatchValue(completedAt),
+		CompletedAt:     NewPatchValue(suppliedCompletedAt),
 		ArchivedAt:      NewPatchValue(archivedAt),
 	})
 	if err != nil {
@@ -316,8 +383,11 @@ func TestRepositoryUpdateV2PersistsRichFields(t *testing.T) {
 	if len(row.Tags) != 2 || row.Tags[0] != "release" || row.Tags[1] != "work" {
 		t.Fatalf("expected tags to persist, got %#v", row.Tags)
 	}
-	if row.CompletedAt == nil || !row.CompletedAt.Equal(completedAt) {
-		t.Fatalf("expected completed_at to persist, got %#v", row.CompletedAt)
+	if row.CompletedAt == nil {
+		t.Fatal("expected completed_at to be server-managed")
+	}
+	if row.CompletedAt.Equal(suppliedCompletedAt) {
+		t.Fatalf("expected completed_at to ignore caller input, got %#v", row.CompletedAt)
 	}
 	if row.ArchivedAt == nil || !row.ArchivedAt.Equal(archivedAt) {
 		t.Fatalf("expected archived_at to persist, got %#v", row.ArchivedAt)
@@ -511,6 +581,9 @@ func seedOwnerAndTodos(t *testing.T, conn *sql.DB, seeds []todoSeed) string {
 		if seed.Priority == "" {
 			seed.Priority = "medium"
 		}
+		if seed.Tags == nil {
+			seed.Tags = []string{}
+		}
 		if seed.CreatedAt == nil {
 			now := time.Now().UTC()
 			seed.CreatedAt = &now
@@ -611,4 +684,29 @@ func mustTime(t *testing.T, value string) *time.Time {
 		t.Fatalf("parse time %q: %v", value, err)
 	}
 	return &parsed
+}
+
+func businessTime(t *testing.T, year int, month time.Month, day, hour, min int) *time.Time {
+	t.Helper()
+
+	value := time.Date(year, month, day, hour, min, 0, 0, businessLocation)
+	return &value
+}
+
+func assertTodoIDs(t *testing.T, got []Item, wantIDs ...string) {
+	t.Helper()
+
+	if len(got) != len(wantIDs) {
+		t.Fatalf("expected %d todos, got %d: %#v", len(wantIDs), len(got), got)
+	}
+
+	gotIDs := make(map[string]struct{}, len(got))
+	for _, item := range got {
+		gotIDs[item.ID] = struct{}{}
+	}
+	for _, wantID := range wantIDs {
+		if _, ok := gotIDs[wantID]; !ok {
+			t.Fatalf("expected todo %s in result set, got %#v", wantID, got)
+		}
+	}
 }

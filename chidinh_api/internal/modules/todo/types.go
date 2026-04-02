@@ -105,10 +105,10 @@ type Item struct {
 }
 
 type CreateParams struct {
-	Title           string     `json:"title"`
+	Title           string     `json:"title" validate:"required,notblank,max=200"`
 	DescriptionHtml string     `json:"descriptionHtml,omitempty"`
-	Status          Status     `json:"status,omitempty"`
-	Priority        Priority   `json:"priority,omitempty"`
+	Status          Status     `json:"status,omitempty" validate:"omitempty,oneof=todo in_progress done cancelled"`
+	Priority        Priority   `json:"priority,omitempty" validate:"omitempty,oneof=low medium high"`
 	DueAt           *time.Time `json:"dueAt,omitempty"`
 	Tags            []string   `json:"tags,omitempty"`
 	CompletedAt     *time.Time `json:"completedAt,omitempty"`
@@ -124,6 +124,128 @@ type UpdateParams struct {
 	Tags            PatchField[[]string]  `json:"tags,omitempty"`
 	CompletedAt     PatchField[time.Time] `json:"completedAt,omitempty"`
 	ArchivedAt      PatchField[time.Time] `json:"archivedAt,omitempty"`
+}
+
+type CreateRequest struct {
+	Title           string     `json:"title" validate:"required,notblank,max=200"`
+	DescriptionHtml string     `json:"descriptionHtml,omitempty"`
+	Status          Status     `json:"status,omitempty" validate:"omitempty,oneof=todo in_progress done cancelled"`
+	Priority        Priority   `json:"priority,omitempty" validate:"omitempty,oneof=low medium high"`
+	DueAt           *time.Time `json:"dueAt,omitempty"`
+	Tags            []string   `json:"tags,omitempty"`
+	ArchivedAt      *time.Time `json:"archivedAt,omitempty"`
+}
+
+type UpdateRequest struct {
+	Title           PatchField[string]    `json:"title,omitempty"`
+	DescriptionHtml PatchField[string]    `json:"descriptionHtml,omitempty"`
+	Status          PatchField[Status]    `json:"status,omitempty"`
+	Priority        PatchField[Priority]  `json:"priority,omitempty"`
+	DueAt           PatchField[time.Time] `json:"dueAt,omitempty"`
+	Tags            PatchField[[]string]  `json:"tags,omitempty"`
+	ArchivedAt      PatchField[time.Time] `json:"archivedAt,omitempty"`
+}
+
+func (p *CreateParams) Normalize() {
+	p.Title = strings.TrimSpace(p.Title)
+	p.Tags = normalizeTags(p.Tags)
+}
+
+func (p *UpdateParams) Normalize() {
+	if p.Title.Present && !p.Title.Null {
+		p.Title.Value = strings.TrimSpace(p.Title.Value)
+	}
+	if p.Tags.Present && !p.Tags.Null {
+		p.Tags.Value = normalizeTags(p.Tags.Value)
+	}
+}
+
+func (p *UpdateParams) ValidateFields(report func(field string, tag string)) {
+	if !p.Title.Present && !p.DescriptionHtml.Present && !p.Status.Present && !p.Priority.Present && !p.DueAt.Present && !p.Tags.Present && !p.CompletedAt.Present && !p.ArchivedAt.Present {
+		report("update", "required")
+	}
+	if p.Title.Present {
+		if p.Title.Null {
+			report("title", "notblank")
+		} else {
+			trimmed := strings.TrimSpace(p.Title.Value)
+			if trimmed == "" {
+				report("title", "notblank")
+			}
+			if len(trimmed) > 200 {
+				report("title", "max")
+			}
+		}
+	}
+	if p.Status.Present && !p.Status.Null && !isValidStatus(p.Status.Value) {
+		report("status", "oneof")
+	}
+	if p.Priority.Present && !p.Priority.Null && !isValidPriority(p.Priority.Value) {
+		report("priority", "oneof")
+	}
+}
+
+func (r *CreateRequest) Normalize() {
+	r.Title = strings.TrimSpace(r.Title)
+	r.Tags = normalizeTags(r.Tags)
+}
+
+func (r CreateRequest) ToParams() CreateParams {
+	return CreateParams{
+		Title:           r.Title,
+		DescriptionHtml: r.DescriptionHtml,
+		Status:          r.Status,
+		Priority:        r.Priority,
+		DueAt:           r.DueAt,
+		Tags:            append([]string(nil), r.Tags...),
+		ArchivedAt:      r.ArchivedAt,
+	}
+}
+
+func (r *UpdateRequest) Normalize() {
+	if r.Title.Present && !r.Title.Null {
+		r.Title.Value = strings.TrimSpace(r.Title.Value)
+	}
+	if r.Tags.Present && !r.Tags.Null {
+		r.Tags.Value = normalizeTags(r.Tags.Value)
+	}
+}
+
+func (r *UpdateRequest) ValidateFields(report func(field string, tag string)) {
+	if !r.Title.Present && !r.DescriptionHtml.Present && !r.Status.Present && !r.Priority.Present && !r.DueAt.Present && !r.Tags.Present && !r.ArchivedAt.Present {
+		report("update", "required")
+	}
+	if r.Title.Present {
+		if r.Title.Null {
+			report("title", "notblank")
+		} else {
+			trimmed := strings.TrimSpace(r.Title.Value)
+			if trimmed == "" {
+				report("title", "notblank")
+			}
+			if len(trimmed) > 200 {
+				report("title", "max")
+			}
+		}
+	}
+	if r.Status.Present && !r.Status.Null && !isValidStatus(r.Status.Value) {
+		report("status", "oneof")
+	}
+	if r.Priority.Present && !r.Priority.Null && !isValidPriority(r.Priority.Value) {
+		report("priority", "oneof")
+	}
+}
+
+func (r UpdateRequest) ToParams() UpdateParams {
+	return UpdateParams{
+		Title:           r.Title,
+		DescriptionHtml: r.DescriptionHtml,
+		Status:          r.Status,
+		Priority:        r.Priority,
+		DueAt:           r.DueAt,
+		Tags:            r.Tags,
+		ArchivedAt:      r.ArchivedAt,
+	}
 }
 
 func (p UpdateParams) MarshalJSON() ([]byte, error) {
@@ -188,30 +310,20 @@ func (p UpdateParams) MarshalJSON() ([]byte, error) {
 	return json.Marshal(out)
 }
 
-type CreateRequest struct {
-	Title string `json:"title" validate:"required,max=200"`
-}
-
-type UpdateRequest struct {
-	Title     *string `json:"title,omitempty" validate:"omitempty,notblank,max=200"`
-	Completed *bool   `json:"completed,omitempty"`
-}
-
-func (r *CreateRequest) Normalize() {
-	r.Title = strings.TrimSpace(r.Title)
-}
-
-func (r *UpdateRequest) Normalize() {
-	if r.Title == nil {
-		return
+func isValidStatus(status Status) bool {
+	switch status {
+	case StatusTodo, StatusInProgress, StatusDone, StatusCancelled:
+		return true
+	default:
+		return false
 	}
-
-	trimmed := strings.TrimSpace(*r.Title)
-	r.Title = &trimmed
 }
 
-func (r *UpdateRequest) ValidateFields(report func(field string, tag string)) {
-	if r.Title == nil && r.Completed == nil {
-		report("update", "required")
+func isValidPriority(priority Priority) bool {
+	switch priority {
+	case PriorityLow, PriorityMedium, PriorityHigh:
+		return true
+	default:
+		return false
 	}
 }

@@ -14,14 +14,18 @@ type Service struct {
 var (
 	ErrInvalidTitle    = errors.New("title is required")
 	ErrTitleTooLong    = errors.New("title must be at most 200 characters")
+	ErrInvalidView     = errors.New("invalid view")
 	ErrInvalidStatus   = errors.New("invalid status")
 	ErrInvalidPriority = errors.New("invalid priority")
 )
 
 type TodoStore interface {
 	List(ctx context.Context, ownerID string) ([]Item, error)
+	ListWithOptions(ctx context.Context, ownerID string, opts ListOptions) ([]Item, error)
 	Create(ctx context.Context, ownerID string, title string) (Item, error)
+	CreateV2(ctx context.Context, ownerID string, params CreateParams) (Item, error)
 	Update(ctx context.Context, ownerID string, todoID string, title *string, completed *bool) (Item, error)
+	UpdateV2(ctx context.Context, ownerID string, todoID string, params UpdateParams) (Item, error)
 	Delete(ctx context.Context, ownerID string, todoID string) error
 }
 
@@ -30,28 +34,52 @@ func NewService(repository TodoStore) *Service {
 }
 
 func (s *Service) List(ctx context.Context, ownerID string) ([]Item, error) {
-	return s.repository.List(ctx, ownerID)
+	return s.ListV2(ctx, ownerID, ListOptions{})
+}
+
+func (s *Service) ListV2(ctx context.Context, ownerID string, opts ListOptions) ([]Item, error) {
+	normalized, err := normalizeListOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repository.ListWithOptions(ctx, ownerID, normalized)
 }
 
 func (s *Service) Create(ctx context.Context, ownerID string, title string) (Item, error) {
-	normalizedTitle, err := normalizeTitleText(title)
-	if err != nil {
+	return s.CreateV2(ctx, ownerID, CreateParams{Title: title})
+}
+
+func (s *Service) CreateV2(ctx context.Context, ownerID string, params CreateParams) (Item, error) {
+	if err := s.NormalizeCreateParams(&params); err != nil {
 		return Item{}, err
 	}
 
-	return s.repository.Create(ctx, ownerID, normalizedTitle)
+	return s.repository.CreateV2(ctx, ownerID, params)
 }
 
 func (s *Service) Update(ctx context.Context, ownerID string, todoID string, title *string, completed *bool) (Item, error) {
+	params := UpdateParams{}
 	if title != nil {
-		trimmed, err := normalizeTitleText(*title)
-		if err != nil {
-			return Item{}, err
+		params.Title.Set(*title)
+	}
+	if completed != nil {
+		if *completed {
+			params.Status.Set(StatusDone)
+		} else {
+			params.Status.Set(StatusTodo)
 		}
-		title = &trimmed
 	}
 
-	return s.repository.Update(ctx, ownerID, todoID, title, completed)
+	return s.UpdateV2(ctx, ownerID, todoID, params)
+}
+
+func (s *Service) UpdateV2(ctx context.Context, ownerID string, todoID string, params UpdateParams) (Item, error) {
+	if err := s.NormalizeUpdateParams(&params); err != nil {
+		return Item{}, err
+	}
+
+	return s.repository.UpdateV2(ctx, ownerID, todoID, params)
 }
 
 func (s *Service) Delete(ctx context.Context, ownerID string, todoID string) error {
@@ -59,6 +87,8 @@ func (s *Service) Delete(ctx context.Context, ownerID string, todoID string) err
 }
 
 func (s *Service) NormalizeCreateParams(params *CreateParams) error {
+	params.Normalize()
+
 	title, err := normalizeTitleText(params.Title)
 	if err != nil {
 		return err
@@ -79,10 +109,8 @@ func (s *Service) NormalizeCreateParams(params *CreateParams) error {
 
 	params.Tags = normalizeTags(params.Tags)
 	if params.Status == StatusDone {
-		if params.CompletedAt == nil {
-			now := time.Now().UTC()
-			params.CompletedAt = &now
-		}
+		now := time.Now().UTC()
+		params.CompletedAt = &now
 	} else {
 		params.CompletedAt = nil
 	}
@@ -91,6 +119,8 @@ func (s *Service) NormalizeCreateParams(params *CreateParams) error {
 }
 
 func (s *Service) NormalizeUpdateParams(params *UpdateParams) error {
+	params.Normalize()
+
 	if params.Title.Present {
 		if params.Title.Null {
 			return ErrInvalidTitle
@@ -111,18 +141,13 @@ func (s *Service) NormalizeUpdateParams(params *UpdateParams) error {
 		}
 		params.Status.Set(status)
 		if status == StatusDone {
-			if params.CompletedAt.Present {
-				if params.CompletedAt.Null {
-					now := time.Now().UTC()
-					params.CompletedAt.Set(now)
-				}
-			} else {
-				now := time.Now().UTC()
-				params.CompletedAt.Set(now)
-			}
+			now := time.Now().UTC()
+			params.CompletedAt.Set(now)
 		} else {
 			params.CompletedAt.Clear()
 		}
+	} else if params.CompletedAt.Present {
+		params.CompletedAt.Clear()
 	}
 	if params.Priority.Present {
 		if params.Priority.Null {
@@ -149,6 +174,23 @@ func (s *Service) NormalizeUpdateParams(params *UpdateParams) error {
 	}
 
 	return nil
+}
+
+func normalizeListOptions(opts ListOptions) (ListOptions, error) {
+	opts.View = strings.ToLower(strings.TrimSpace(opts.View))
+	opts.Search = strings.TrimSpace(opts.Search)
+	opts.Tag = strings.ToLower(strings.TrimSpace(opts.Tag))
+
+	switch opts.View {
+	case "", "active", "today", "upcoming", "overdue", "completed", "archived":
+	default:
+		return ListOptions{}, ErrInvalidView
+	}
+	if opts.Status != "" && !isValidStatus(opts.Status) {
+		return ListOptions{}, ErrInvalidStatus
+	}
+
+	return opts, nil
 }
 
 func normalizeTitleText(title string) (string, error) {

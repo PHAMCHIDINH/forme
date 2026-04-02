@@ -14,6 +14,8 @@ import (
 
 var ErrNotFound = errors.New("todo not found")
 
+var businessLocation = time.FixedZone("Asia/Ho_Chi_Minh", 7*60*60)
+
 type Repository struct {
 	queries *db.Queries
 }
@@ -22,6 +24,7 @@ type ListOptions struct {
 	View   string
 	Search string
 	Tag    string
+	Status Status
 }
 
 func NewRepository(queries *db.Queries) *Repository {
@@ -35,7 +38,7 @@ func (r *Repository) List(ctx context.Context, ownerID string) ([]Item, error) {
 func (r *Repository) ListWithOptions(ctx context.Context, ownerID string, opts ListOptions) ([]Item, error) {
 	rows, err := r.queries.ListTodosByOwner(ctx, db.ListTodosByOwnerParams{
 		OwnerID:  ownerID,
-		ViewName: opts.View,
+		ViewName: "",
 		Search:   opts.Search,
 		Tag:      opts.Tag,
 	})
@@ -43,9 +46,17 @@ func (r *Repository) ListWithOptions(ctx context.Context, ownerID string, opts L
 		return nil, fmt.Errorf("failed to list todos: %w", err)
 	}
 
+	now := time.Now().UTC()
 	items := make([]Item, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, mapListTodoRow(row))
+		item := mapListTodoRow(row)
+		if !matchesTodoView(item, opts.View, now) {
+			continue
+		}
+		if opts.Status != "" && item.Status != opts.Status {
+			continue
+		}
+		items = append(items, item)
 	}
 
 	return items, nil
@@ -57,8 +68,8 @@ func (r *Repository) Create(ctx context.Context, ownerID string, title string) (
 
 func (r *Repository) CreateV2(ctx context.Context, ownerID string, params CreateParams) (Item, error) {
 	status, priority := normalizeCreateState(params.Status, params.Priority)
-	completedAt := params.CompletedAt
-	if status == StatusDone && completedAt == nil {
+	var completedAt *time.Time
+	if status == StatusDone {
 		now := time.Now().UTC()
 		completedAt = &now
 	}
@@ -161,13 +172,6 @@ func (r *Repository) UpdateV2(ctx context.Context, ownerID string, todoID string
 			next.Tags = cloneTags(params.Tags.Value)
 		}
 	}
-	if params.CompletedAt.Present {
-		if params.CompletedAt.Null {
-			next.CompletedAt = nil
-		} else {
-			next.CompletedAt = timePtr(params.CompletedAt.Value)
-		}
-	}
 	if params.ArchivedAt.Present {
 		if params.ArchivedAt.Null {
 			next.ArchivedAt = nil
@@ -176,7 +180,7 @@ func (r *Repository) UpdateV2(ctx context.Context, ownerID string, todoID string
 		}
 	}
 
-	if statusProvided && !params.CompletedAt.Present {
+	if statusProvided {
 		if next.Status == StatusDone {
 			if next.CompletedAt == nil {
 				now := time.Now().UTC()
@@ -391,4 +395,34 @@ func mapUpdateTodoRow(item db.UpdateTodoRow) Item {
 		item.CreatedAt,
 		item.UpdatedAt,
 	)
+}
+
+func matchesTodoView(item Item, view string, now time.Time) bool {
+	switch view {
+	case "":
+		return true
+	case "active":
+		return item.ArchivedAt == nil && item.Status != StatusDone && item.Status != StatusCancelled
+	case "today":
+		return item.ArchivedAt == nil && item.DueAt != nil && sameBusinessDay(*item.DueAt, now)
+	case "upcoming":
+		return item.ArchivedAt == nil && item.DueAt != nil && businessDay(*item.DueAt).After(businessDay(now))
+	case "overdue":
+		return item.ArchivedAt == nil && item.DueAt != nil && item.Status != StatusDone && businessDay(*item.DueAt).Before(businessDay(now))
+	case "completed":
+		return item.ArchivedAt == nil && item.Status == StatusDone
+	case "archived":
+		return item.ArchivedAt != nil
+	default:
+		return false
+	}
+}
+
+func sameBusinessDay(a, b time.Time) bool {
+	return businessDay(a).Equal(businessDay(b))
+}
+
+func businessDay(ts time.Time) time.Time {
+	normalized := ts.In(businessLocation)
+	return time.Date(normalized.Year(), normalized.Month(), normalized.Day(), 0, 0, 0, 0, businessLocation)
 }

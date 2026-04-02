@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -81,6 +84,528 @@ func TestUpdateRejectsEmptyPayloadOverHTTP(t *testing.T) {
 	}
 }
 
+func TestListViewTodayParsesAndForwardsOptionsOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Launch plan",
+			Status:    todo.StatusInProgress,
+			Priority:  todo.PriorityHigh,
+			CreatedAt: time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/todos/?view=today&q=launch&tag=work&status=in_progress", nil)
+	req.AddCookie(authCookie(t))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			Items []todo.Item `json:"items"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected list success, got error: %+v", *resp.Error)
+	}
+	if len(store.listOpts) != 1 {
+		t.Fatalf("expected list options to be captured once, got %#v", store.listOpts)
+	}
+	wantOpts := todo.ListOptions{View: "today", Search: "launch", Tag: "work", Status: todo.StatusInProgress}
+	if got := store.listOpts[0]; got != wantOpts {
+		t.Fatalf("expected parsed list options %#v, got %#v", wantOpts, got)
+	}
+	if len(resp.Data.Items) != 1 {
+		t.Fatalf("expected one response item, got %d: %#v", len(resp.Data.Items), resp.Data.Items)
+	}
+	if resp.Data.Items[0].ID != "todo-1" || resp.Data.Items[0].Title != "Launch plan" || resp.Data.Items[0].Status != todo.StatusInProgress {
+		t.Fatalf("unexpected response item: %#v", resp.Data.Items[0])
+	}
+}
+
+func TestListViewOverdueParsesAndForwardsOptionsOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-2",
+			Title:     "Past due",
+			Status:    todo.StatusTodo,
+			Priority:  todo.PriorityMedium,
+			CreatedAt: time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 4, 1, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/todos/?view=overdue&search=due", nil)
+	req.AddCookie(authCookie(t))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			Items []todo.Item `json:"items"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected overdue success, got error: %+v", *resp.Error)
+	}
+	if len(store.listOpts) != 1 {
+		t.Fatalf("expected list options to be captured once, got %#v", store.listOpts)
+	}
+	wantOpts := todo.ListOptions{View: "overdue", Search: "due"}
+	if got := store.listOpts[0]; got != wantOpts {
+		t.Fatalf("expected parsed list options %#v, got %#v", wantOpts, got)
+	}
+	if len(resp.Data.Items) != 1 {
+		t.Fatalf("expected one response item, got %d: %#v", len(resp.Data.Items), resp.Data.Items)
+	}
+	if resp.Data.Items[0].ID != "todo-2" || resp.Data.Items[0].Title != "Past due" {
+		t.Fatalf("unexpected response item: %#v", resp.Data.Items[0])
+	}
+}
+
+func TestCreateRichPayloadReturnsV2FieldsOverHTTP(t *testing.T) {
+	store := newFakeTodoStore()
+	router := newTodoTestRouter(store)
+	dueAt := time.Date(2026, 4, 2, 15, 0, 0, 0, time.UTC)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/todos/", bytes.NewBufferString(`{
+		"title":"Launch plan",
+		"descriptionHtml":"<p>Finalize launch plan</p>",
+		"status":"done",
+		"priority":"high",
+		"dueAt":"2026-04-02T15:00:00Z",
+		"tags":["work","launch"]
+	}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			Item todo.Item `json:"item"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected create success, got error: %+v", *resp.Error)
+	}
+	if resp.Data.Item.Title != "Launch plan" {
+		t.Fatalf("expected title to survive create, got %#v", resp.Data.Item)
+	}
+	if resp.Data.Item.DescriptionHtml != "<p>Finalize launch plan</p>" {
+		t.Fatalf("expected descriptionHtml to round-trip, got %#v", resp.Data.Item.DescriptionHtml)
+	}
+	if resp.Data.Item.Status != todo.StatusDone {
+		t.Fatalf("expected status %q, got %#v", todo.StatusDone, resp.Data.Item.Status)
+	}
+	if resp.Data.Item.Priority != todo.PriorityHigh {
+		t.Fatalf("expected priority %q, got %#v", todo.PriorityHigh, resp.Data.Item.Priority)
+	}
+	if resp.Data.Item.DueAt == nil || !resp.Data.Item.DueAt.Equal(dueAt) {
+		t.Fatalf("expected dueAt %v, got %#v", dueAt, resp.Data.Item.DueAt)
+	}
+	if got, want := resp.Data.Item.Tags, []string{"work", "launch"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("expected tags %v, got %#v", want, got)
+	}
+	if resp.Data.Item.CompletedAt == nil {
+		t.Fatal("expected completedAt to be server-managed on create")
+	}
+	if len(store.createParams) != 1 {
+		t.Fatalf("expected create to reach the store once, got %#v", store.createParams)
+	}
+	if got := store.createParams[0].CompletedAt; got == nil {
+		t.Fatalf("expected store create params to be server-managed, got %#v", got)
+	}
+}
+
+func TestCreateRejectsUnknownJSONFieldsOverHTTP(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+	}{
+		{
+			name: "completedAt",
+			body: `{"title":"Launch plan","completedAt":"2025-01-01T00:00:00Z"}`,
+		},
+		{
+			name: "misspelled field",
+			body: `{"title":"Launch plan","titel":"Launch plan"}`,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newFakeTodoStore()
+			router := newTodoTestRouter(store)
+
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/todos/", bytes.NewBufferString(tt.body))
+			req.AddCookie(authCookie(t))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+
+			router.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+			}
+
+			var resp struct {
+				Data  any                   `json:"data"`
+				Error *apiresponse.APIError `json:"error"`
+			}
+			if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+				t.Fatalf("expected JSON error response, got error: %v", err)
+			}
+			if resp.Error == nil {
+				t.Fatal("expected error response for unknown field")
+			}
+			if resp.Error.Message != "invalid JSON payload" {
+				t.Fatalf("expected invalid JSON payload error, got %q", resp.Error.Message)
+			}
+			if len(store.createParams) != 0 {
+				t.Fatalf("expected create to be rejected before store call, got %#v", store.createParams)
+			}
+		})
+	}
+}
+
+func TestCreateRejectsTrailingJSONBodyOverHTTP(t *testing.T) {
+	store := newFakeTodoStore()
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/todos/", bytes.NewBufferString(`{"title":"Launch plan"}{"title":"Extra"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for trailing JSON")
+	}
+	if resp.Error.Message != "invalid JSON payload" {
+		t.Fatalf("expected invalid JSON payload error, got %q", resp.Error.Message)
+	}
+	if len(store.createParams) != 0 {
+		t.Fatalf("expected create to be rejected before store call, got %#v", store.createParams)
+	}
+}
+
+func TestPatchArchivesTaskOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Draft spec",
+			Status:    todo.StatusTodo,
+			Completed: false,
+			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+	archivedAt := time.Date(2026, 4, 2, 18, 30, 0, 0, time.UTC)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{
+		"title":"Draft spec",
+		"archivedAt":"2026-04-02T18:30:00Z"
+	}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			Item todo.Item `json:"item"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected archive success, got error: %+v", *resp.Error)
+	}
+	if resp.Data.Item.ArchivedAt == nil || !resp.Data.Item.ArchivedAt.Equal(archivedAt) {
+		t.Fatalf("expected archivedAt to round-trip, got %#v", resp.Data.Item.ArchivedAt)
+	}
+	if got := store.items["todo-1"].ArchivedAt; got == nil || !got.Equal(archivedAt) {
+		t.Fatalf("expected stored archivedAt to be set, got %#v", got)
+	}
+}
+
+func TestPatchStatusDoneSetsCompletedAtOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Draft spec",
+			Status:    todo.StatusTodo,
+			Completed: false,
+			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{
+		"title":"Finish draft",
+		"status":"done"
+	}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			Item todo.Item `json:"item"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected update success, got error: %+v", *resp.Error)
+	}
+	if resp.Data.Item.Status != todo.StatusDone {
+		t.Fatalf("expected status to be done, got %#v", resp.Data.Item.Status)
+	}
+	if resp.Data.Item.CompletedAt == nil {
+		t.Fatal("expected completedAt to be populated in the response")
+	}
+	if !resp.Data.Item.CompletedAt.After(time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC)) {
+		t.Fatalf("expected completedAt to be server-managed, got %#v", resp.Data.Item.CompletedAt)
+	}
+	if len(store.updateParams) != 1 {
+		t.Fatalf("expected update to reach the store once, got %#v", store.updateParams)
+	}
+	if got := store.items["todo-1"].CompletedAt; got == nil {
+		t.Fatalf("expected store record completedAt to be server-managed, got %#v", got)
+	}
+}
+
+func TestPatchRejectsUnknownJSONFieldsOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Draft spec",
+			Status:    todo.StatusTodo,
+			Completed: false,
+			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{
+		"title":"Finish draft",
+		"completedAt":"2025-01-02T00:00:00Z"
+	}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for unknown field")
+	}
+	if resp.Error.Message != "invalid JSON payload" {
+		t.Fatalf("expected invalid JSON payload error, got %q", resp.Error.Message)
+	}
+	if len(store.updateParams) != 0 {
+		t.Fatalf("expected update to be rejected before store call, got %#v", store.updateParams)
+	}
+}
+
+func TestPatchRejectsTrailingJSONBodyOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Draft spec",
+			Status:    todo.StatusTodo,
+			Completed: false,
+			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{"title":"Finish draft"}{"title":"Extra"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for trailing JSON")
+	}
+	if resp.Error.Message != "invalid JSON payload" {
+		t.Fatalf("expected invalid JSON payload error, got %q", resp.Error.Message)
+	}
+	if len(store.updateParams) != 0 {
+		t.Fatalf("expected update to be rejected before store call, got %#v", store.updateParams)
+	}
+}
+
+func TestCreateReturnsInternalErrorOnStoreFailureOverHTTP(t *testing.T) {
+	store := newFakeTodoStore()
+	store.createErr = errors.New("db crashed")
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/todos/", bytes.NewBufferString(`{"title":"Launch plan"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for store failure")
+	}
+	if resp.Error.Code != "internal_error" {
+		t.Fatalf("expected internal_error code, got %#v", resp.Error.Code)
+	}
+	if resp.Error.Message != "failed to create todo" {
+		t.Fatalf("expected stable create error message, got %q", resp.Error.Message)
+	}
+	if strings.Contains(resp.Error.Message, "db crashed") {
+		t.Fatalf("expected backend error to stay hidden, got %q", resp.Error.Message)
+	}
+}
+
+func TestPatchReturnsInternalErrorOnStoreFailureOverHTTP(t *testing.T) {
+	store := newFakeTodoStore(
+		todo.Item{
+			ID:        "todo-1",
+			Title:     "Draft spec",
+			Status:    todo.StatusTodo,
+			Completed: false,
+			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
+		},
+	)
+	store.updateErr = errors.New("db crashed")
+	router := newTodoTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{"title":"Finish draft"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for store failure")
+	}
+	if resp.Error.Code != "internal_error" {
+		t.Fatalf("expected internal_error code, got %#v", resp.Error.Code)
+	}
+	if resp.Error.Message != "failed to update todo" {
+		t.Fatalf("expected stable update error message, got %q", resp.Error.Message)
+	}
+	if strings.Contains(resp.Error.Message, "db crashed") {
+		t.Fatalf("expected backend error to stay hidden, got %q", resp.Error.Message)
+	}
+}
+
 func TestListReturnsExpectedRecordsOverHTTP(t *testing.T) {
 	store := newFakeTodoStore(
 		todo.Item{
@@ -130,52 +655,6 @@ func TestListReturnsExpectedRecordsOverHTTP(t *testing.T) {
 	}
 	if resp.Data.Items[1].ID != "todo-2" || resp.Data.Items[1].Title != "Review notes" || !resp.Data.Items[1].Completed {
 		t.Fatalf("unexpected second todo: %+v", resp.Data.Items[1])
-	}
-}
-
-func TestTodoCompletionUpdateUpdatesRecordOverHTTP(t *testing.T) {
-	store := newFakeTodoStore(
-		todo.Item{
-			ID:        "todo-1",
-			Title:     "Draft spec",
-			Completed: false,
-			CreatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
-			UpdatedAt: time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC),
-		},
-	)
-	router := newTodoTestRouter(store)
-
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/todos/todo-1", bytes.NewBufferString(`{"completed":true}`))
-	req.AddCookie(authCookie(t))
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-
-	router.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
-	}
-
-	var resp struct {
-		Data struct {
-			Item todo.Item `json:"item"`
-		} `json:"data"`
-		Error *apiresponse.APIError `json:"error"`
-	}
-	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
-		t.Fatalf("expected JSON response, got error: %v", err)
-	}
-	if resp.Error != nil {
-		t.Fatalf("expected update success, got error: %+v", *resp.Error)
-	}
-	if resp.Data.Item.ID != "todo-1" {
-		t.Fatalf("expected todo id %q, got %q", "todo-1", resp.Data.Item.ID)
-	}
-	if !resp.Data.Item.Completed {
-		t.Fatalf("expected todo to be completed, got %+v", resp.Data.Item)
-	}
-	if got := store.items["todo-1"]; !got.Completed {
-		t.Fatalf("expected stored todo to be completed, got %+v", got)
 	}
 }
 
@@ -383,8 +862,13 @@ func (s stubOwnerStore) GetOwnerByID(_ context.Context, id string) (db.Owner, er
 }
 
 type fakeTodoStore struct {
-	items map[string]todo.Item
-	order []string
+	items        map[string]todo.Item
+	order        []string
+	listOpts     []todo.ListOptions
+	createParams []todo.CreateParams
+	updateParams []todo.UpdateParams
+	createErr    error
+	updateErr    error
 }
 
 func newFakeTodoStore(items ...todo.Item) *fakeTodoStore {
@@ -414,7 +898,24 @@ func (s *fakeTodoStore) List(_ context.Context, _ string) ([]todo.Item, error) {
 	return items, nil
 }
 
+func (s *fakeTodoStore) ListWithOptions(_ context.Context, _ string, opts todo.ListOptions) ([]todo.Item, error) {
+	s.listOpts = append(s.listOpts, opts)
+	items := make([]todo.Item, 0, len(s.order))
+	for _, id := range s.order {
+		item, ok := s.items[id]
+		if !ok {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
 func (s *fakeTodoStore) Create(_ context.Context, _ string, title string) (todo.Item, error) {
+	if s.createErr != nil {
+		return todo.Item{}, s.createErr
+	}
 	now := time.Now().UTC()
 	item := todo.Item{
 		ID:        fmt.Sprintf("todo-%d", len(s.items)+1),
@@ -429,7 +930,36 @@ func (s *fakeTodoStore) Create(_ context.Context, _ string, title string) (todo.
 	return item, nil
 }
 
+func (s *fakeTodoStore) CreateV2(_ context.Context, _ string, params todo.CreateParams) (todo.Item, error) {
+	s.createParams = append(s.createParams, params)
+	if s.createErr != nil {
+		return todo.Item{}, s.createErr
+	}
+	now := time.Now().UTC()
+	item := todo.Item{
+		ID:              fmt.Sprintf("todo-%d", len(s.items)+1),
+		Title:           params.Title,
+		DescriptionHtml: params.DescriptionHtml,
+		Status:          params.Status,
+		Priority:        params.Priority,
+		DueAt:           params.DueAt,
+		Tags:            append([]string(nil), params.Tags...),
+		CompletedAt:     params.CompletedAt,
+		ArchivedAt:      params.ArchivedAt,
+		Completed:       params.Status == todo.StatusDone || params.CompletedAt != nil,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+	s.items[item.ID] = item
+	s.order = append(s.order, item.ID)
+
+	return item, nil
+}
+
 func (s *fakeTodoStore) Update(_ context.Context, _ string, todoID string, title *string, completed *bool) (todo.Item, error) {
+	if s.updateErr != nil {
+		return todo.Item{}, s.updateErr
+	}
 	item, ok := s.items[todoID]
 	if !ok {
 		return todo.Item{}, todo.ErrNotFound
@@ -441,6 +971,56 @@ func (s *fakeTodoStore) Update(_ context.Context, _ string, todoID string, title
 	if completed != nil {
 		item.Completed = *completed
 	}
+	item.UpdatedAt = time.Now().UTC()
+	s.items[todoID] = item
+
+	return item, nil
+}
+
+func (s *fakeTodoStore) UpdateV2(_ context.Context, _ string, todoID string, params todo.UpdateParams) (todo.Item, error) {
+	s.updateParams = append(s.updateParams, params)
+	if s.updateErr != nil {
+		return todo.Item{}, s.updateErr
+	}
+	item, ok := s.items[todoID]
+	if !ok {
+		return todo.Item{}, todo.ErrNotFound
+	}
+
+	if params.Title.HasValue() {
+		item.Title = params.Title.Value
+	}
+	if params.DescriptionHtml.HasValue() {
+		item.DescriptionHtml = params.DescriptionHtml.Value
+	}
+	if params.Status.HasValue() {
+		item.Status = params.Status.Value
+	}
+	if params.Priority.HasValue() {
+		item.Priority = params.Priority.Value
+	}
+	if params.DueAt.HasValue() {
+		value := params.DueAt.Value.UTC()
+		item.DueAt = &value
+	}
+	if params.Tags.HasValue() {
+		item.Tags = append([]string(nil), params.Tags.Value...)
+	}
+	if params.CompletedAt.HasValue() {
+		value := params.CompletedAt.Value.UTC()
+		item.CompletedAt = &value
+	}
+	if params.CompletedAt.IsNull() {
+		item.CompletedAt = nil
+	}
+	if params.ArchivedAt.HasValue() {
+		value := params.ArchivedAt.Value.UTC()
+		item.ArchivedAt = &value
+	}
+	if params.ArchivedAt.IsNull() {
+		item.ArchivedAt = nil
+	}
+	item.Completed = item.Status == todo.StatusDone || item.CompletedAt != nil
 	item.UpdatedAt = time.Now().UTC()
 	s.items[todoID] = item
 
