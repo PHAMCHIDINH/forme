@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "../../shared/ui/Button";
 import { Panel } from "../../shared/ui/Panel";
 import { useLogout, useSession } from "../auth/useSession";
+import { SHELL_NAV_ITEMS } from "./shellNav";
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -24,15 +25,16 @@ export function DashboardLayout() {
           </div>
 
           <nav aria-label="Dashboard Navigation" className="space-y-2">
-            <NavLink className="block rounded-full px-4 py-3 hover:bg-surfaceAlt" to="/app">
-              Home
-            </NavLink>
-            <NavLink className="block rounded-full px-4 py-3 hover:bg-surfaceAlt" to="/app/todo">
-              Todo
-            </NavLink>
-            <NavLink className="block rounded-full px-4 py-3 hover:bg-surfaceAlt" to="/">
-              Public Hub
-            </NavLink>
+            {SHELL_NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                className="block rounded-full px-4 py-3 hover:bg-surfaceAlt"
+                to={item.to}
+                end={item.end}
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
 
           <div className="mt-auto space-y-3 border-t border-border pt-6">
