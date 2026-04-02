@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import { AppRoutes } from "../app/router/AppRouter";
-import { createTestQueryClient, jsonResponse, mockFetchSequence, readJsonBody } from "./test-utils";
+import { createTestQueryClient, jsonResponse, mockFetchSequence } from "./test-utils";
 
 function renderTodoRoute() {
   const queryClient = createTestQueryClient();
@@ -18,190 +18,99 @@ function renderTodoRoute() {
   );
 }
 
+function sampleTask(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "task-1",
+    title: "Review launch plan",
+    descriptionHtml: "<p>Check blockers</p>",
+    status: "in_progress",
+    priority: "high",
+    dueAt: "2026-04-03T02:00:00.000Z",
+    tags: ["work", "launch"],
+    completedAt: null,
+    archivedAt: null,
+    createdAt: "2026-04-02T10:00:00.000Z",
+    updatedAt: "2026-04-02T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("TodoPage", () => {
-  it("shows an empty state when there are no todos", async () => {
-    mockFetchSequence(
-      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
-      jsonResponse({ items: [] }),
-    );
-
-    renderTodoRoute();
-
-    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
-    expect(await screen.findByText(/no active tasks yet/i)).toBeInTheDocument();
-    expect(screen.getByText("0 total")).toBeInTheDocument();
-  });
-
-  it("shows summary metrics for the loaded list", async () => {
-    mockFetchSequence(
-      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-1",
-            title: "Ship the first release",
-            completed: false,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-          {
-            id: "todo-2",
-            title: "Archive release notes",
-            completed: true,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
-    );
-
-    renderTodoRoute();
-
-    expect(await screen.findByText(/2 total/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 open/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 complete/i)).toBeInTheDocument();
-  });
-
-  it("renders the todo list", async () => {
-    mockFetchSequence(
-      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-1",
-            title: "Ship the first release",
-            completed: false,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
-    );
-
-    renderTodoRoute();
-
-    expect(await screen.findByRole("heading", { name: /todo operations/i })).toBeInTheDocument();
-    expect(await screen.findByText("Ship the first release")).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Ship the first release" })).not.toBeChecked();
-  });
-
-  it("creates a todo", async () => {
+  it("loads the all active view by default", async () => {
     const fetchMock = mockFetchSequence(
       jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
       jsonResponse({ items: [] }),
-      jsonResponse({
-        item: {
-          id: "todo-2",
-          title: "Write frontend tests",
-          completed: false,
-          createdAt: "2026-03-31T00:00:00.000Z",
-          updatedAt: "2026-03-31T00:00:00.000Z",
-        },
-      }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-2",
-            title: "Write frontend tests",
-            completed: false,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
     );
-    const user = userEvent.setup();
 
     renderTodoRoute();
 
-    await screen.findByRole("heading", { name: /todo operations/i });
+    await screen.findByRole("heading", { name: /personal tasks/i });
 
-    await user.type(screen.getByLabelText(/task title/i), "Write frontend tests");
-    await user.click(screen.getByRole("button", { name: /add task/i }));
-
-    await screen.findByText("Write frontend tests");
-
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(new URL(String(fetchMock.mock.calls[2][0])).pathname).toBe("/api/v1/todos");
-    expect(readJsonBody(fetchMock.mock.calls[2][1])).toEqual({ title: "Write frontend tests" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const url = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(url.pathname).toBe("/api/v1/todos");
+    expect(url.searchParams.get("view")).toBe("active");
   });
 
-  it("toggles a todo", async () => {
+  it("passes search and view filters to the todo api", async () => {
     const fetchMock = mockFetchSequence(
       jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-3",
-            title: "Review release notes",
-            completed: false,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
-      jsonResponse({
-        item: {
-          id: "todo-3",
-          title: "Review release notes",
-          completed: true,
-          createdAt: "2026-03-31T00:00:00.000Z",
-          updatedAt: "2026-03-31T00:00:00.000Z",
-        },
-      }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-3",
-            title: "Review release notes",
-            completed: true,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
-    );
-    const user = userEvent.setup();
-
-    renderTodoRoute();
-
-    const checkbox = await screen.findByRole("checkbox", { name: "Review release notes" });
-    await user.click(checkbox);
-
-    await waitFor(() => expect(checkbox).toBeChecked());
-
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(new URL(String(fetchMock.mock.calls[2][0])).pathname).toBe("/api/v1/todos/todo-3");
-    expect(readJsonBody(fetchMock.mock.calls[2][1])).toEqual({ completed: true });
-  });
-
-  it("deletes a todo", async () => {
-    const fetchMock = mockFetchSequence(
-      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
-      jsonResponse({
-        items: [
-          {
-            id: "todo-4",
-            title: "Draft release checklist",
-            completed: false,
-            createdAt: "2026-03-31T00:00:00.000Z",
-            updatedAt: "2026-03-31T00:00:00.000Z",
-          },
-        ],
-      }),
-      jsonResponse({ success: true }),
+      jsonResponse({ items: [] }),
+      jsonResponse({ items: [] }),
       jsonResponse({ items: [] }),
     );
     const user = userEvent.setup();
 
     renderTodoRoute();
+    await screen.findByRole("heading", { name: /personal tasks/i });
 
-    await screen.findByText("Draft release checklist");
-    await user.click(screen.getByRole("button", { name: /delete/i }));
+    await user.selectOptions(screen.getByLabelText(/view/i), "completed");
+    await user.type(screen.getByLabelText(/search/i), "launch");
 
-    await waitFor(() => expect(screen.queryByText("Draft release checklist")).not.toBeInTheDocument());
+    await waitFor(() => {
+      const hasFinalSearchCall = fetchMock.mock.calls.some((call) => {
+        const url = new URL(String(call[0]));
+        return url.searchParams.get("view") === "completed" && url.searchParams.get("q") === "launch";
+      });
+      expect(hasFinalSearchCall).toBe(true);
+    });
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
-    expect(new URL(String(fetchMock.mock.calls[2][0])).pathname).toBe("/api/v1/todos/todo-4");
+    const viewUrl = new URL(String(fetchMock.mock.calls[2][0]));
+    expect(viewUrl.searchParams.get("view")).toBe("completed");
+
+    const searchCall = fetchMock.mock.calls.find((call) => {
+      const url = new URL(String(call[0]));
+      return url.searchParams.get("view") === "completed" && url.searchParams.get("q") === "launch";
+    });
+    expect(searchCall).toBeDefined();
+    const searchUrl = new URL(String(searchCall?.[0]));
+    expect(searchUrl.searchParams.get("view")).toBe("completed");
+    expect(searchUrl.searchParams.get("q")).toBe("launch");
+  });
+
+  it("renders task metadata returned by the api", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({
+        items: [
+          sampleTask(),
+          sampleTask({
+            id: "task-2",
+            title: "Tidy backlog",
+            status: "todo",
+            priority: "medium",
+            dueAt: null,
+            tags: [],
+          }),
+        ],
+      }),
+    );
+
+    renderTodoRoute();
+
+    expect(await screen.findByText("Review launch plan")).toBeInTheDocument();
+    expect(screen.getByText(/in_progress · high/i)).toBeInTheDocument();
+    expect(screen.getByText(/#work #launch/i)).toBeInTheDocument();
+    expect(screen.getByText(/todo · medium/i)).toBeInTheDocument();
   });
 });

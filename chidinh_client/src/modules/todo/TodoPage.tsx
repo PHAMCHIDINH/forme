@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Panel } from "../../shared/ui/Panel";
 import { SectionHeading } from "../../shared/ui/SectionHeading";
 import { createTodo, deleteTodo, listTodos, updateTodo } from "./api";
+import { TaskItem, TaskListView } from "./taskTypes";
 
 const todoSchema = z.object({
   title: z.string().trim().min(1, "Task title is required").max(200, "Task title is too long"),
@@ -16,9 +17,12 @@ type TodoFormValues = z.infer<typeof todoSchema>;
 
 export function TodoPage() {
   const queryClient = useQueryClient();
+  const [view, setView] = useState<TaskListView>("active");
+  const [search, setSearch] = useState("");
+
   const todosQuery = useQuery({
-    queryKey: ["todos"],
-    queryFn: listTodos,
+    queryKey: ["todos", view, search],
+    queryFn: () => listTodos({ view, q: search || undefined }),
   });
 
   const form = useForm<TodoFormValues>({
@@ -31,7 +35,7 @@ export function TodoPage() {
   const items = todosQuery.data?.items ?? [];
   const metrics = useMemo(() => {
     const total = items.length;
-    const completed = items.filter((item) => item.completed).length;
+    const completed = items.filter((item) => item.status === "done").length;
 
     return {
       total,
@@ -41,7 +45,7 @@ export function TodoPage() {
   }, [items]);
 
   const createMutation = useMutation({
-    mutationFn: (newTitle: string) => createTodo(newTitle),
+    mutationFn: (newTitle: string) => createTodo({ title: newTitle }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       form.reset();
@@ -49,8 +53,8 @@ export function TodoPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
-      updateTodo(id, { completed }),
+    mutationFn: ({ id, status }: { id: string; status: TaskItem["status"] }) =>
+      updateTodo(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
@@ -75,9 +79,38 @@ export function TodoPage() {
     <section className="space-y-6">
       <SectionHeading
         eyebrow="Operations"
-        title="Todo Operations"
+        title="Personal Tasks"
         description="Track active execution tasks inside the private workspace."
       />
+
+      <Panel className="p-5">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="todo-view">View</label>
+            <select
+              id="todo-view"
+              value={view}
+              onChange={(event) => setView(event.target.value as TaskListView)}
+            >
+              <option value="active">All active</option>
+              <option value="today">Today</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="overdue">Overdue</option>
+              <option value="completed">Completed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="todo-search">Search</label>
+            <input
+              id="todo-search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search title, description, tags"
+            />
+          </div>
+        </div>
+      </Panel>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Panel className="p-5">
@@ -131,7 +164,7 @@ export function TodoPage() {
 
       {!todosQuery.isLoading && !todosQuery.isError && items.length === 0 ? (
         <Panel className="p-8 text-center">
-          <p className="font-display text-2xl text-text">No active tasks yet.</p>
+          <p className="font-display text-2xl text-text">No tasks in this view yet.</p>
           <p className="mt-2 text-sm text-muted">
             Add your first item to start shaping the workspace rhythm.
           </p>
@@ -146,15 +179,22 @@ export function TodoPage() {
                 <input
                   className="h-4 w-4"
                   type="checkbox"
-                  checked={todo.completed}
+                  checked={todo.status === "done"}
                   onChange={(event) =>
                     updateMutation.mutate({
                       id: todo.id,
-                      completed: event.target.checked,
+                      status: event.target.checked ? "done" : "todo",
                     })
                   }
                 />
-                <span>{todo.title}</span>
+                <span>
+                  <span>{todo.title}</span>
+                  <span className="mt-1 block text-xs text-muted">
+                    {todo.status} · {todo.priority}
+                    {todo.dueAt ? ` · due ${new Date(todo.dueAt).toLocaleDateString("en-CA")}` : ""}
+                    {todo.tags.length > 0 ? ` · #${todo.tags.join(" #")}` : ""}
+                  </span>
+                </span>
               </label>
 
               <button

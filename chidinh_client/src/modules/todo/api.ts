@@ -1,26 +1,34 @@
 import { apiRequest } from "../../shared/api/client";
+import { CreateTaskInput, ListTodosParams, TaskItem, UpdateTaskInput } from "./taskTypes";
 
-export type TodoItem = {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type { TaskItem } from "./taskTypes";
 
-export async function listTodos() {
-  return apiRequest<{ items: TodoItem[] }>("/api/v1/todos");
+export async function listTodos(params: ListTodosParams = {}) {
+  const searchParams = new URLSearchParams();
+  const view = params.view ?? "active";
+  searchParams.set("view", view);
+  if (params.q) {
+    searchParams.set("q", params.q);
+  }
+  if (params.status) {
+    searchParams.set("status", params.status);
+  }
+  if (params.tag) {
+    searchParams.set("tag", params.tag);
+  }
+
+  return apiRequest<{ items: TaskItem[] }>(`/api/v1/todos?${searchParams.toString()}`);
 }
 
-export async function createTodo(title: string) {
-  return apiRequest<{ item: TodoItem }>("/api/v1/todos", {
+export async function createTodo(input: CreateTaskInput) {
+  return apiRequest<{ item: TaskItem }>("/api/v1/todos", {
     method: "POST",
-    body: { title },
+    body: input,
   });
 }
 
-export async function updateTodo(id: string, data: { title?: string; completed?: boolean }) {
-  return apiRequest<{ item: TodoItem }>(`/api/v1/todos/${id}`, {
+export async function updateTodo(id: string, data: UpdateTaskInput) {
+  return apiRequest<{ item: TaskItem }>(`/api/v1/todos/${id}`, {
     method: "PATCH",
     body: data,
   });
