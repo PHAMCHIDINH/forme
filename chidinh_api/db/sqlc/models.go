@@ -19,10 +19,17 @@ type Owner struct {
 }
 
 type Todo struct {
-	ID        uuid.UUID          `json:"id"`
-	OwnerID   string             `json:"owner_id"`
-	Title     string             `json:"title"`
-	Completed bool               `json:"completed"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	Completed       bool               `json:"completed"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
 }

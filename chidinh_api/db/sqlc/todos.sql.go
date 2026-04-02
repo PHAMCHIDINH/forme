@@ -13,25 +13,105 @@ import (
 )
 
 const createTodo = `-- name: CreateTodo :one
-INSERT INTO todos (id, owner_id, title, completed)
-VALUES ($1, $2, $3, false)
-RETURNING id, owner_id, title, completed, created_at, updated_at
+INSERT INTO todos (
+    id,
+    owner_id,
+    title,
+    description_html,
+    status,
+    priority,
+    due_at,
+    tags,
+    completed_at,
+    archived_at,
+    completed
+)
+VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    CASE
+        WHEN $5::text = 'done' THEN TRUE
+        ELSE FALSE
+    END
+)
+RETURNING id,
+          owner_id,
+          title,
+          description_html,
+          status,
+          priority,
+          due_at,
+          tags,
+          completed,
+          completed_at,
+          archived_at,
+          created_at,
+          updated_at
 `
 
 type CreateTodoParams struct {
-	ID      uuid.UUID `json:"id"`
-	OwnerID string    `json:"owner_id"`
-	Title   string    `json:"title"`
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
 }
 
-func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, error) {
-	row := q.db.QueryRow(ctx, createTodo, arg.ID, arg.OwnerID, arg.Title)
-	var i Todo
+type CreateTodoRow struct {
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	Completed       bool               `json:"completed"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (CreateTodoRow, error) {
+	row := q.db.QueryRow(ctx, createTodo,
+		arg.ID,
+		arg.OwnerID,
+		arg.Title,
+		arg.DescriptionHtml,
+		arg.Status,
+		arg.Priority,
+		arg.DueAt,
+		arg.Tags,
+		arg.CompletedAt,
+		arg.ArchivedAt,
+	)
+	var i CreateTodoRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
 		&i.Title,
+		&i.DescriptionHtml,
+		&i.Status,
+		&i.Priority,
+		&i.DueAt,
+		&i.Tags,
 		&i.Completed,
+		&i.CompletedAt,
+		&i.ArchivedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -58,7 +138,19 @@ func (q *Queries) DeleteTodoByIDAndOwner(ctx context.Context, arg DeleteTodoByID
 }
 
 const getTodoByIDAndOwner = `-- name: GetTodoByIDAndOwner :one
-SELECT id, owner_id, title, completed, created_at, updated_at
+SELECT id,
+       owner_id,
+       title,
+       description_html,
+       status,
+       priority,
+       due_at,
+       tags,
+       completed,
+       completed_at,
+       archived_at,
+       created_at,
+       updated_at
 FROM todos
 WHERE id = $1
   AND owner_id = $2
@@ -69,14 +161,37 @@ type GetTodoByIDAndOwnerParams struct {
 	OwnerID string    `json:"owner_id"`
 }
 
-func (q *Queries) GetTodoByIDAndOwner(ctx context.Context, arg GetTodoByIDAndOwnerParams) (Todo, error) {
+type GetTodoByIDAndOwnerRow struct {
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	Completed       bool               `json:"completed"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetTodoByIDAndOwner(ctx context.Context, arg GetTodoByIDAndOwnerParams) (GetTodoByIDAndOwnerRow, error) {
 	row := q.db.QueryRow(ctx, getTodoByIDAndOwner, arg.ID, arg.OwnerID)
-	var i Todo
+	var i GetTodoByIDAndOwnerRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
 		&i.Title,
+		&i.DescriptionHtml,
+		&i.Status,
+		&i.Priority,
+		&i.DueAt,
+		&i.Tags,
 		&i.Completed,
+		&i.CompletedAt,
+		&i.ArchivedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -84,26 +199,104 @@ func (q *Queries) GetTodoByIDAndOwner(ctx context.Context, arg GetTodoByIDAndOwn
 }
 
 const listTodosByOwner = `-- name: ListTodosByOwner :many
-SELECT id, owner_id, title, completed, created_at, updated_at
+SELECT id,
+       owner_id,
+       title,
+       description_html,
+       status,
+       priority,
+       due_at,
+       tags,
+       completed,
+       completed_at,
+       archived_at,
+       created_at,
+       updated_at
 FROM todos
 WHERE owner_id = $1
-ORDER BY created_at DESC
+  AND (
+    $2::text = ''
+    OR (
+      $2::text = 'active'
+      AND archived_at IS NULL
+      AND status IN ('todo', 'in_progress')
+    )
+    OR (
+      $2::text = 'completed'
+      AND archived_at IS NULL
+      AND status = 'done'
+    )
+    OR (
+      $2::text = 'archived'
+      AND archived_at IS NOT NULL
+    )
+  )
+  AND (
+    $3::text = ''
+    OR title ILIKE '%' || $3 || '%'
+    OR description_html ILIKE '%' || $3 || '%'
+    OR EXISTS (
+      SELECT 1
+      FROM unnest(tags) AS tag
+      WHERE tag ILIKE '%' || $3 || '%'
+    )
+  )
+  AND (
+    $4::text = ''
+    OR $4 = ANY(tags)
+  )
+ORDER BY COALESCE(due_at, created_at) ASC, created_at DESC
 `
 
-func (q *Queries) ListTodosByOwner(ctx context.Context, ownerID string) ([]Todo, error) {
-	rows, err := q.db.Query(ctx, listTodosByOwner, ownerID)
+type ListTodosByOwnerParams struct {
+	OwnerID  string `json:"owner_id"`
+	ViewName string `json:"view_name"`
+	Search   string `json:"search"`
+	Tag      string `json:"tag"`
+}
+
+type ListTodosByOwnerRow struct {
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	Completed       bool               `json:"completed"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListTodosByOwner(ctx context.Context, arg ListTodosByOwnerParams) ([]ListTodosByOwnerRow, error) {
+	rows, err := q.db.Query(ctx, listTodosByOwner,
+		arg.OwnerID,
+		arg.ViewName,
+		arg.Search,
+		arg.Tag,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Todo
+	var items []ListTodosByOwnerRow
 	for rows.Next() {
-		var i Todo
+		var i ListTodosByOwnerRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerID,
 			&i.Title,
+			&i.DescriptionHtml,
+			&i.Status,
+			&i.Priority,
+			&i.DueAt,
+			&i.Tags,
 			&i.Completed,
+			&i.CompletedAt,
+			&i.ArchivedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -119,36 +312,93 @@ func (q *Queries) ListTodosByOwner(ctx context.Context, ownerID string) ([]Todo,
 
 const updateTodo = `-- name: UpdateTodo :one
 UPDATE todos
-SET title = $3,
-    completed = $4,
-    updated_at = $5
-WHERE id = $1
-  AND owner_id = $2
-RETURNING id, owner_id, title, completed, created_at, updated_at
+SET title = $1,
+    description_html = $2,
+    status = $3,
+    priority = $4,
+    due_at = $5,
+    tags = $6,
+    completed_at = $7,
+    archived_at = $8,
+    completed = CASE
+        WHEN $3::text = 'done' THEN TRUE
+        ELSE FALSE
+    END,
+    updated_at = $9
+WHERE id = $10
+  AND owner_id = $11
+RETURNING id,
+          owner_id,
+          title,
+          description_html,
+          status,
+          priority,
+          due_at,
+          tags,
+          completed,
+          completed_at,
+          archived_at,
+          created_at,
+          updated_at
 `
 
 type UpdateTodoParams struct {
-	ID        uuid.UUID          `json:"id"`
-	OwnerID   string             `json:"owner_id"`
-	Title     string             `json:"title"`
-	Completed bool               `json:"completed"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
 }
 
-func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) (Todo, error) {
+type UpdateTodoRow struct {
+	ID              uuid.UUID          `json:"id"`
+	OwnerID         string             `json:"owner_id"`
+	Title           string             `json:"title"`
+	DescriptionHtml string             `json:"description_html"`
+	Status          string             `json:"status"`
+	Priority        string             `json:"priority"`
+	DueAt           pgtype.Timestamptz `json:"due_at"`
+	Tags            []string           `json:"tags"`
+	Completed       bool               `json:"completed"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) (UpdateTodoRow, error) {
 	row := q.db.QueryRow(ctx, updateTodo,
+		arg.Title,
+		arg.DescriptionHtml,
+		arg.Status,
+		arg.Priority,
+		arg.DueAt,
+		arg.Tags,
+		arg.CompletedAt,
+		arg.ArchivedAt,
+		arg.UpdatedAt,
 		arg.ID,
 		arg.OwnerID,
-		arg.Title,
-		arg.Completed,
-		arg.UpdatedAt,
 	)
-	var i Todo
+	var i UpdateTodoRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
 		&i.Title,
+		&i.DescriptionHtml,
+		&i.Status,
+		&i.Priority,
+		&i.DueAt,
+		&i.Tags,
 		&i.Completed,
+		&i.CompletedAt,
+		&i.ArchivedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
