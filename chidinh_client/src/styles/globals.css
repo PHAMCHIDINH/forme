@@ -24,7 +24,6 @@
   /* Legacy aliases kept only as a migration bridge for existing utilities. */
   --color-base: var(--background);
   --color-surface: var(--card);
-  --color-surface-alt: var(--secondary);
   --color-text: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
@@ -65,7 +64,6 @@
   --color-surface: var(--card);
   --color-surfaceAlt: var(--secondary);
   --color-text: var(--foreground);
-  --color-surface-alt: var(--secondary);
 }
 
 @layer base {

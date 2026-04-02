@@ -29,4 +29,13 @@ describe("tailwind theme integration", () => {
     expect(input).toContain("input:focus");
     expect(input).toContain("button {");
   });
+
+  it("keeps only approved legacy alias bridge tokens", async () => {
+    const cssPath = path.resolve(process.cwd(), "src/styles/globals.css");
+    const input = await readFile(cssPath, "utf8");
+
+    expect(input).toContain("--color-base");
+    expect(input).toContain("--color-surfaceAlt");
+    expect(input).not.toContain("--color-surface-alt");
+  });
 });

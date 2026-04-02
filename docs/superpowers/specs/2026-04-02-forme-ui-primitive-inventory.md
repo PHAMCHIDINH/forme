@@ -282,3 +282,19 @@ This inventory should stay aligned with the current verification surface in
 
 If a primitive change invalidates one of these assumptions, the test surface
 should be updated deliberately rather than bypassed.
+
+## 10. Cleanup Outcomes
+
+Current cleanup and deprecation outcomes:
+
+- legacy alias `--color-surface-alt` is sunset and removed from
+  `src/styles/globals.css`
+- approved bridge aliases remain `--color-base`, `--color-surface`,
+  `--color-surfaceAlt`, and `--color-text`
+
+Current frozen prototype status:
+
+- `SidebarNav`, `WindowFrame`, `DockNav`, `SystemBar`, `CommandPalette`,
+  `RightPanel`, and `useWorkspaceStore` remain frozen as directional prototypes
+- no prototype shell piece has been reclassified as canonical foundation in
+  this cycle
