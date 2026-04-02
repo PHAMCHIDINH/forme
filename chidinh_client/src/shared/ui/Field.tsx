@@ -1,12 +1,13 @@
-import * as Label from "@radix-ui/react-label";
-import type { PropsWithChildren } from "react";
+import type { ComponentPropsWithoutRef, PropsWithChildren } from "react";
+
+import { Label as PrimitiveLabel } from "../form-system/primitives/Label";
 import { InlineFeedback } from "./InlineFeedback";
 
 type FieldProps = PropsWithChildren<{
   className?: string;
 }>;
 
-type FieldLabelProps = React.ComponentPropsWithoutRef<typeof Label.Root>;
+type FieldLabelProps = ComponentPropsWithoutRef<typeof PrimitiveLabel>;
 
 type FieldMessageProps = PropsWithChildren<{
   className?: string;
@@ -18,7 +19,7 @@ export function Field({ children, className = "" }: FieldProps) {
 }
 
 export function FieldLabel({ className = "", ...props }: FieldLabelProps) {
-  return <Label.Root className={`text-sm font-medium text-text ${className}`.trim()} {...props} />;
+  return <PrimitiveLabel className={className} {...props} />;
 }
 
 export function FieldMessage({

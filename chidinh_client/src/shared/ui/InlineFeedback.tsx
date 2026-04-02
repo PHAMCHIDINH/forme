@@ -1,5 +1,8 @@
 import type { PropsWithChildren } from "react";
 
+import { ErrorText } from "../form-system/primitives/ErrorText";
+import { HelperText } from "../form-system/primitives/HelperText";
+
 type InlineFeedbackProps = PropsWithChildren<{
   className?: string;
   tone?: "default" | "error";
@@ -10,12 +13,9 @@ export function InlineFeedback({
   className = "",
   tone = "default",
 }: InlineFeedbackProps) {
-  const toneClass = tone === "error" ? "text-red-700" : "text-muted";
-  const role = tone === "error" ? "alert" : "status";
+  if (tone === "error") {
+    return <ErrorText className={className}>{children}</ErrorText>;
+  }
 
-  return (
-    <p className={`text-sm ${toneClass} ${className}`.trim()} role={role}>
-      {children}
-    </p>
-  );
+  return <HelperText className={className}>{children}</HelperText>;
 }
