@@ -51,11 +51,18 @@ describe("TodoPage form-system pilot", () => {
     renderTodoRoute();
     await screen.findByRole("heading", { name: /personal tasks/i });
 
-    expect(screen.getByText(/summarize the task in one line/i)).toBeInTheDocument();
+    const helper = screen.getByText((content, node) => {
+      return node?.id === "todo-title-helper" && content.includes("scans cleanly in lists");
+    });
+
+    expect(helper).toBeInTheDocument();
+    expect(helper).toHaveTextContent(/scans cleanly in lists/i);
+    expect(helper.textContent?.trim().split(/\s+/).length).toBeGreaterThan(10);
 
     await user.click(screen.getByRole("button", { name: /add task/i }));
 
-    expect(screen.getByText(/summarize the task in one line/i)).toBeInTheDocument();
+    expect(helper).toBeVisible();
+    expect(helper.textContent?.trim().split(/\s+/).length).toBeGreaterThan(10);
     expect(screen.getByLabelText(/task title/i)).toHaveAttribute(
       "aria-describedby",
       expect.stringContaining("todo-title-helper"),
@@ -79,6 +86,27 @@ describe("TodoPage form-system pilot", () => {
     expect(rows[1]).toHaveAttribute("data-columns", "2");
     expect(actionArea).toBeInTheDocument();
     expect(summary).not.toBeInTheDocument();
+  });
+
+  test("renders todo status and priority through the shared select primitive shell", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({ items: [] }),
+    );
+
+    const { container } = renderTodoRoute();
+    await screen.findByRole("heading", { name: /personal tasks/i });
+
+    const status = screen.getByLabelText(/status/i);
+    const priority = screen.getByLabelText(/priority/i);
+
+    expect(status.tagName).toBe("SELECT");
+    expect(priority.tagName).toBe("SELECT");
+    expect(status).toHaveClass("rounded-[var(--radius-md)]");
+    expect(priority).toHaveClass("rounded-[var(--radius-md)]");
+    expect(status).toHaveClass("appearance-none");
+    expect(priority).toHaveClass("appearance-none");
+    expect(container.querySelectorAll("select#todo-status, select#todo-priority")).toHaveLength(2);
   });
 
   test("clears hidden due date state when status change hides the dependent field", async () => {

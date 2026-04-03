@@ -77,7 +77,8 @@ export function LoginPage() {
                       {...register("username")}
                     />
                     <HelperText id={usernameHelperId}>
-                      Use your workspace handle, not your public display name.
+                      Use your workspace handle, not your public display name, so access stays tied to
+                      the correct workspace.
                     </HelperText>
                     {errors.username ? (
                       <ErrorText id={usernameErrorId}>

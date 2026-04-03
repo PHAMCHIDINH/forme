@@ -26,10 +26,18 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
 
     renderLoginRoute();
+    const usernameHelper = screen.getByText((content, node) => {
+      return node?.id === "login-username-helper" && content.includes("workspace handle");
+    });
+
+    expect(usernameHelper).toBeInTheDocument();
+    expect(usernameHelper).toHaveTextContent(/workspace handle/i);
+    expect(usernameHelper.textContent?.trim().split(/\s+/).length).toBeGreaterThan(8);
     await user.click(screen.getByRole("button", { name: /enter workspace/i }));
 
     expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
     expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+    expect(usernameHelper).toBeVisible();
     expect(screen.getByLabelText(/username/i)).toHaveAttribute(
       "aria-describedby",
       "login-username-helper login-username-error",

@@ -31,7 +31,7 @@ Evidence:
 - [x] Primitive inventory matches the v1 list frozen in the spec.
 - [x] Primitive semantics and state hooks are covered by tests.
 - [x] Pattern-level components exist for grouping, section structure, validation summary, actions, and conditional blocks.
-- [x] Dark mode baseline is proven stable for pilot forms.
+- [x] Dark mode baseline has initial class-level evidence on shared field primitives and the `LoginPage` pilot.
 
 Evidence:
 - `chidinh_client/src/shared/form-system/primitives/index.ts`
@@ -57,7 +57,7 @@ Evidence:
 - [x] `TodoForm` falls back to one column for the `title + due date` row because that row fails the checklist.
 - [x] `TodoForm` keeps two columns for the `status + priority` row because that row passes the checklist.
 - [x] Validation summary and action area remain inside the natural reading flow.
-- [x] Mobile collapse readability is proven with explicit pilot evidence.
+- [x] Mobile collapse readability is covered by class-contract evidence from the layout and pilot assertions; this is not full viewport proof.
 
 Evidence:
 - `chidinh_client/src/modules/todo/TodoForm.tsx`
@@ -75,9 +75,9 @@ Evidence:
 - [x] Conditional reveal and hidden-state cleanup are covered.
 - [x] Action hierarchy is stable in both pilots.
 - [x] Pilot composition uses shared form-system primitives/patterns instead of route-local rescue components.
-- [x] Pilot coverage explicitly proves helper-text stress cases on real pilot forms.
-- [x] Pilot coverage explicitly proves desktop/mobile behavior.
-- [x] Pilot coverage explicitly proves dark mode baseline.
+- [x] Pilot coverage includes helper-text stress cases on real pilot forms.
+- [x] Pilot coverage includes responsive shell/layout class-contract evidence for the pilot forms.
+- [ ] Dark mode baseline is only partially covered today: class-level evidence exists for `LoginPage` and shared field primitives, but not yet for both pilots.
 
 Evidence:
 - `docs/project/2026-04-02-form-system-v1-kickoff-locks.md`
@@ -108,4 +108,4 @@ Proceed with controlled pilot iteration, not broad rollout.
 Rationale:
 - Core contracts, primitive inventory, pattern layer, and pilot behavior now map to the system rules in the spec.
 - Rollout governance exists and is reviewable.
-- The remaining caution is rollout posture, not missing pilot evidence: the foundation is proven on two pilots, but the spec still calls for controlled expansion rather than broad migration by default.
+- The remaining caution is not only rollout posture. Responsive proof is still class-contract evidence rather than browser-level viewport evidence, and dark mode baseline is not yet proven across both pilots.

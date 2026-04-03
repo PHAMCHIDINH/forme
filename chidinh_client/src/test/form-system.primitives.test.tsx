@@ -23,6 +23,24 @@ describe("form system primitives", () => {
     expect(screen.getByRole("textbox", { name: "Title" })).toHaveAttribute("data-state", "error");
   });
 
+  test("keeps readonly inputs visually distinct from disabled inputs", () => {
+    render(
+      <>
+        <InputShell aria-label="Readonly title" readOnly value="Visible value" />
+        <InputShell aria-label="Disabled title" disabled value="Hidden affordance" />
+      </>,
+    );
+
+    const readonlyInput = screen.getByRole("textbox", { name: "Readonly title" });
+    const disabledInput = screen.getByRole("textbox", { name: "Disabled title" });
+
+    expect(readonlyInput).toHaveClass("read-only:bg-[var(--surface-panel-muted)]");
+    expect(readonlyInput).toHaveAttribute("readonly");
+    expect(readonlyInput).not.toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(disabledInput).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(disabledInput).toBeDisabled();
+  });
+
   test("renders HelperText with status semantics", () => {
     render(<HelperText>Helpful guidance</HelperText>);
 
@@ -59,10 +77,45 @@ describe("form system primitives", () => {
     expect(errorText).toHaveAttribute("role", "alert");
   });
 
-  test("defaults SelectTrigger to button type", () => {
-    render(<SelectTrigger>Select a value</SelectTrigger>);
+  test("renders SelectTrigger as a native select control", () => {
+    render(
+      <SelectTrigger aria-label="Select a value" value="" onChange={() => {}}>
+        <option value="">Select a value</option>
+      </SelectTrigger>,
+    );
 
-    expect(screen.getByRole("button", { name: "Select a value" })).toHaveAttribute("type", "button");
+    expect(screen.getByRole("combobox", { name: "Select a value" }).tagName).toBe("SELECT");
+  });
+
+  test("renders SelectTrigger as a native select with shared field shell styling", () => {
+    render(
+      <SelectTrigger aria-label="Project status" value="planned" onChange={() => {}}>
+        <option value="planned">Planned</option>
+        <option value="active">Active</option>
+      </SelectTrigger>,
+    );
+
+    const trigger = screen.getByRole("combobox", { name: "Project status" });
+
+    expect(trigger.tagName).toBe("SELECT");
+    expect(trigger).toHaveClass("rounded-[var(--radius-md)]");
+    expect(trigger).toHaveClass("appearance-none");
+    expect(trigger).toHaveClass("pr-8");
+  });
+
+  test("renders disabled SelectTrigger with shared disabled shell styling", () => {
+    render(
+      <SelectTrigger aria-label="Project status" disabled value="planned" onChange={() => {}}>
+        <option value="planned">Planned</option>
+        <option value="active">Active</option>
+      </SelectTrigger>,
+    );
+
+    const trigger = screen.getByRole("combobox", { name: "Project status" });
+
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(trigger).toHaveClass("disabled:text-muted-foreground");
   });
 
   test("renders TextareaShell as a textarea and accepts className", () => {
@@ -70,6 +123,24 @@ describe("form system primitives", () => {
 
     expect(screen.getByRole("textbox", { name: "Notes" }).tagName).toBe("TEXTAREA");
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveClass("custom-textarea");
+  });
+
+  test("keeps readonly textarea distinct from disabled textarea", () => {
+    render(
+      <>
+        <TextareaShell aria-label="Readonly notes" readOnly value="Review only" />
+        <TextareaShell aria-label="Disabled notes" disabled value="Blocked" />
+      </>,
+    );
+
+    const readonlyTextarea = screen.getByRole("textbox", { name: "Readonly notes" });
+    const disabledTextarea = screen.getByRole("textbox", { name: "Disabled notes" });
+
+    expect(readonlyTextarea).toHaveAttribute("readonly");
+    expect(readonlyTextarea).toHaveClass("read-only:bg-[var(--surface-panel-muted)]");
+    expect(readonlyTextarea).not.toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(disabledTextarea).toBeDisabled();
+    expect(disabledTextarea).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
   });
 
   test("associates Label with its control through htmlFor", () => {

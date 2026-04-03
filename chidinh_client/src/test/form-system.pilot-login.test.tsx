@@ -34,9 +34,14 @@ describe("LoginPage form-system pilot", () => {
     renderLoginRoute();
 
     const username = screen.getByLabelText(/username/i);
+    const helper = screen.getByText((content, node) => {
+      return node?.id === "login-username-helper" && content.includes("workspace handle");
+    });
 
     expect(username).toHaveAttribute("aria-describedby", "login-username-helper");
-    expect(screen.getByText(/use your workspace handle/i)).toBeInTheDocument();
+    expect(helper).toBeInTheDocument();
+    expect(helper).toHaveTextContent(/workspace handle/i);
+    expect(helper.textContent?.trim().split(/\s+/).length).toBeGreaterThan(8);
   });
 
   test("keeps the login shell single-column by default and upgrades to the desktop split only at lg", () => {

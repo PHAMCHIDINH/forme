@@ -5,10 +5,12 @@ import { getFieldShellClassName } from "./InputShell";
 export type TextareaShellProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export const TextareaShell = forwardRef<HTMLTextAreaElement, TextareaShellProps>(
-  function TextareaShell({ className, ...props }, ref) {
+  function TextareaShell({ className, disabled, readOnly, ...props }, ref) {
     return (
       <textarea
-        className={getFieldShellClassName("min-h-28 resize-y", className)}
+        className={getFieldShellClassName({ readOnly, disabled }, "min-h-28 resize-y", className)}
+        disabled={disabled}
+        readOnly={readOnly}
         ref={ref}
         {...props}
       />

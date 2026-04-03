@@ -8,7 +8,7 @@ import {
   type ValidationSummaryError,
 } from "../../shared/form-system/patterns";
 import { isTwoColumnEligible } from "../../shared/form-system/contracts/twoColumnEligibility";
-import { ErrorText, HelperText, Label } from "../../shared/form-system/primitives";
+import { ErrorText, HelperText, Label, SelectTrigger } from "../../shared/form-system/primitives";
 import { Button } from "../../shared/ui/Button";
 import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
@@ -107,7 +107,8 @@ export function TodoForm({
               onChange={(event) => onTitleChange(event.target.value)}
             />
             <HelperText id={titleHelperId}>
-              Summarize the task in one line so it still scans cleanly in lists.
+              Summarize the task in one line so it still scans cleanly in lists, even when the task
+              needs more context than the row can show.
             </HelperText>
             {titleError ? <ErrorText id={titleErrorId}>{titleError}</ErrorText> : null}
           </div>
@@ -129,7 +130,7 @@ export function TodoForm({
         <FieldRow columns={STATUS_AND_PRIORITY_COLUMNS} data-testid="todo-status-row">
           <div className="space-y-2">
             <Label htmlFor="todo-status">Status</Label>
-            <select
+            <SelectTrigger
               id="todo-status"
               value={formState.status}
               onChange={(event) => onStatusChange(event.target.value as TaskStatus)}
@@ -138,11 +139,11 @@ export function TodoForm({
               <option value="in_progress">In progress</option>
               <option value="done">Done</option>
               <option value="cancelled">Cancelled</option>
-            </select>
+            </SelectTrigger>
           </div>
           <div className="space-y-2">
             <Label htmlFor="todo-priority">Priority</Label>
-            <select
+            <SelectTrigger
               id="todo-priority"
               value={formState.priority}
               onChange={(event) => onPriorityChange(event.target.value as TaskPriority)}
@@ -150,7 +151,7 @@ export function TodoForm({
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
-            </select>
+            </SelectTrigger>
           </div>
         </FieldRow>
 
