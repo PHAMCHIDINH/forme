@@ -71,8 +71,23 @@ describe("desktop shell primitives", () => {
   it("renders the sidebar as a framed shell panel", () => {
     renderSidebarNav();
 
-    expect(screen.getByLabelText(/dashboard navigation/i).parentElement?.className).toContain(
-      "shadow-[var(--shadow-crisp-md)]",
+    expect(screen.getByText("Private Hub")).toHaveClass(
+      "inline-block",
+      "border-2",
+      "bg-card",
+      "text-[0.65rem]",
+      "font-black",
+      "uppercase",
+      "shadow-[var(--shadow-crisp-sm)]",
+    );
+    expect(screen.getByRole("link", { name: /overview/i })).toHaveClass(
+      "border-2",
+      "px-3",
+      "py-3",
+      "font-black",
+      "uppercase",
+      "bg-primary",
+      "text-primary-foreground",
     );
   });
 });
