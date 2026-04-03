@@ -11,7 +11,7 @@ export function ErrorText({ className, ...props }: ErrorTextProps) {
     <p
       {...props}
       className={[
-        "text-sm leading-6 text-[var(--form-state-error-text)]",
+        "text-xs font-black uppercase leading-5 tracking-[0.08em] text-[var(--destructive)]",
         className,
       ]
         .filter(Boolean)

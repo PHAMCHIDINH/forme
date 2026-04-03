@@ -9,7 +9,7 @@ export const Label = forwardRef<ElementRef<typeof RadixLabel.Root>, LabelProps>(
 ) {
   return (
     <RadixLabel.Root
-      className={["block text-sm font-medium text-foreground", className].filter(Boolean).join(" ")}
+      className={["block text-xs font-black uppercase tracking-[0.14em] text-foreground", className].filter(Boolean).join(" ")}
       ref={ref}
       {...props}
     />

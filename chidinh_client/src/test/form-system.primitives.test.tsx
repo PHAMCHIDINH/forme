@@ -23,6 +23,14 @@ describe("form system primitives", () => {
     expect(screen.getByRole("textbox", { name: "Title" })).toHaveAttribute("data-state", "error");
   });
 
+  test("styles InputShell as a hard-edged field shell", () => {
+    render(<InputShell aria-label="Project name" />);
+
+    const input = screen.getByRole("textbox", { name: "Project name" });
+    expect(input).toHaveClass("border-2");
+    expect(input).toHaveClass("shadow-[var(--shadow-crisp-sm)]");
+  });
+
   test("keeps readonly inputs visually distinct from disabled inputs", () => {
     render(
       <>
@@ -100,7 +108,7 @@ describe("form system primitives", () => {
     expect(trigger.tagName).toBe("SELECT");
     expect(trigger).toHaveClass("rounded-[var(--radius-md)]");
     expect(trigger).toHaveClass("appearance-none");
-    expect(trigger).toHaveClass("pr-8");
+    expect(trigger).toHaveClass("pr-10");
   });
 
   test("renders disabled SelectTrigger with shared disabled shell styling", () => {

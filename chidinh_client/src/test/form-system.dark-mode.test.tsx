@@ -36,6 +36,6 @@ describe("form-system dark mode baseline", () => {
     renderDarkModeHarness();
 
     expect(screen.getByRole("main")).toHaveAttribute("data-theme", "dark");
-    expect(screen.getByRole("textbox", { name: "Dark field" })).toHaveClass("bg-[var(--surface-panel)]");
+    expect(screen.getByRole("textbox", { name: "Dark field" })).toHaveClass("bg-[var(--input)]");
   });
 });

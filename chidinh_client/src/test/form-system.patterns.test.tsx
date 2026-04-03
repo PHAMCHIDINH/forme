@@ -77,6 +77,14 @@ describe("form system patterns", () => {
     );
   });
 
+  test("renders ValidationSummary as a framed alert block", () => {
+    render(<ValidationSummary errors={[{ fieldId: "title", message: "Title is required" }]} />);
+
+    const summary = screen.getByRole("alert");
+    expect(summary).toHaveClass("border-2");
+    expect(summary).toHaveClass("shadow-[var(--shadow-crisp-sm)]");
+  });
+
   test("ValidationSummary returns null when no errors are present", () => {
     const { container } = render(<ValidationSummary errors={[]} />);
 

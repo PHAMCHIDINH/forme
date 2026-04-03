@@ -10,7 +10,10 @@ export function HelperText({ className, ...props }: HelperTextProps) {
   return (
     <p
       {...props}
-      className={["text-sm leading-6 text-muted-foreground", className].filter(Boolean).join(" ")}
+      className={[
+        "text-xs font-medium leading-5 tracking-[0.04em] text-muted-foreground",
+        className,
+      ].filter(Boolean).join(" ")}
       aria-live="polite"
       data-tone="default"
       role="status"
