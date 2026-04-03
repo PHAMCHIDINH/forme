@@ -11,9 +11,10 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow-[var(--shadow-crisp-sm)] hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-[var(--primary-hover)]",
         secondary:
           "bg-secondary text-secondary-foreground shadow-[var(--shadow-crisp-sm)] hover:translate-x-[1px] hover:translate-y-[1px]",
-        ghost: "bg-card text-foreground shadow-[var(--shadow-crisp-sm)]",
+        ghost:
+          "border-transparent bg-transparent text-foreground shadow-none hover:border-[var(--border)] hover:bg-[var(--surface-panel-muted)]",
         scope:
-          "justify-start bg-accent text-accent-foreground shadow-[var(--shadow-crisp-sm)] data-[selected=true]:border-[var(--border)] data-[selected=true]:bg-[var(--surface-panel-featured)] data-[selected=true]:text-foreground data-[selected=true]:shadow-[var(--shadow-crisp-sm)]",
+          "justify-start bg-accent text-accent-foreground shadow-[var(--shadow-crisp-sm)] data-[selected=true]:border-[var(--border-strong)] data-[selected=true]:bg-[var(--surface-panel-featured)] data-[selected=true]:text-foreground data-[selected=true]:shadow-[var(--shadow-crisp-md)] data-[selected=true]:translate-y-[-1px]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-[var(--shadow-crisp-sm)] hover:translate-x-[1px] hover:translate-y-[1px]",
       },
@@ -41,10 +42,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   const Comp = asChild ? Slot : "button";
+  const selectedScopeClassName =
+    selected && variant === "scope"
+      ? "border-[var(--border-strong)] bg-[var(--surface-panel-featured)] text-foreground shadow-[var(--shadow-crisp-md)] -translate-y-px"
+      : "";
 
   return (
     <Comp
-      className={buttonVariants({ variant, size, className })}
+      className={`${buttonVariants({ variant, size, className })} ${selectedScopeClassName}`.trim()}
       data-pending={pending ? "true" : "false"}
       data-selected={selected ? "true" : "false"}
       ref={ref}

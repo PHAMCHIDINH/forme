@@ -41,6 +41,42 @@ describe("Button", () => {
     expect(link.className).toContain("inline-flex");
   });
 
+  it("renders ghost buttons as low-emphasis actions", () => {
+    render(
+      <Button type="button" variant="ghost">
+        Learn more
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: /learn more/i });
+
+    expect(button.className).toContain("bg-transparent");
+    expect(button.className).toContain("shadow-none");
+    expect(button.className).toContain("hover:bg-[var(--surface-panel-muted)]");
+  });
+
+  it("renders selected scope buttons as visibly stronger than unselected scope buttons", () => {
+    render(
+      <div>
+        <Button type="button" variant="scope">
+          All
+        </Button>
+        <Button selected type="button" variant="scope">
+          Planned
+        </Button>
+      </div>,
+    );
+
+    const unselected = screen.getByRole("button", { name: /all/i });
+    const selected = screen.getByRole("button", { name: /planned/i });
+
+    expect(selected).toHaveAttribute("data-selected", "true");
+    expect(unselected.className).toContain("bg-accent");
+    expect(selected.className).toContain("bg-[var(--surface-panel-featured)]");
+    expect(selected.className).toContain("shadow-[var(--shadow-crisp-md)]");
+    expect(selected.className).not.toBe(unselected.className);
+  });
+
   it("keeps selected styling for scope buttons", () => {
     render(
       <Button selected type="button" variant="scope">
