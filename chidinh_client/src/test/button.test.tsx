@@ -40,4 +40,17 @@ describe("Button", () => {
     expect(link).toHaveAttribute("href", "/login");
     expect(link.className).toContain("inline-flex");
   });
+
+  it("keeps selected styling for scope buttons", () => {
+    render(
+      <Button selected type="button" variant="scope">
+        Planned
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: /planned/i });
+
+    expect(button).toHaveAttribute("data-selected", "true");
+    expect(button.className).toContain("data-[selected=true]:bg-[var(--surface-panel-featured)]");
+  });
 });

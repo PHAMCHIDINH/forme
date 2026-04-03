@@ -12,7 +12,8 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground shadow-[var(--shadow-crisp-sm)] hover:translate-x-[1px] hover:translate-y-[1px]",
         ghost: "bg-card text-foreground shadow-[var(--shadow-crisp-sm)]",
-        scope: "justify-start bg-accent text-accent-foreground shadow-[var(--shadow-crisp-sm)]",
+        scope:
+          "justify-start bg-accent text-accent-foreground shadow-[var(--shadow-crisp-sm)] data-[selected=true]:border-[var(--border)] data-[selected=true]:bg-[var(--surface-panel-featured)] data-[selected=true]:text-foreground data-[selected=true]:shadow-[var(--shadow-crisp-sm)]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-[var(--shadow-crisp-sm)] hover:translate-x-[1px] hover:translate-y-[1px]",
       },
