@@ -47,7 +47,10 @@ export function LoginPage() {
       data-theme={activeTheme}
     >
       <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.92fr]" data-testid="login-shell-grid">
-        <Panel className="border-2 bg-secondary p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10">
+        <Panel
+          className="border-2 bg-secondary p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10"
+          data-testid="login-info-panel"
+        >
           <p className="text-sm uppercase tracking-[0.24em] text-accent">Private Hub</p>
           <h1 className="mt-4 font-display text-4xl uppercase tracking-[0.08em] text-text">
             Enter Workspace
@@ -63,7 +66,10 @@ export function LoginPage() {
           </Link>
         </Panel>
 
-        <Panel className="border-2 bg-card p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10">
+        <Panel
+          className="border-2 bg-card p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10"
+          data-testid="login-form-panel"
+        >
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
             <FormSection
               className="space-y-0 border-0 bg-transparent p-0 shadow-none"

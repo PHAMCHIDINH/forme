@@ -25,8 +25,18 @@ describe("LoginPage", () => {
   it("renders the login shell as two framed panels", () => {
     renderLoginRoute();
 
-    expect(screen.getAllByText(/private hub|enter workspace/i).length).toBeGreaterThan(0);
-    expect(screen.getByTestId("login-shell-grid").className).toContain("lg:grid-cols");
+    expect(screen.getByTestId("login-shell-grid")).toHaveClass("grid", "gap-6", "lg:grid-cols-[1fr_0.92fr]");
+    expect(screen.getByTestId("login-info-panel")).toHaveClass(
+      "border-2",
+      "bg-secondary",
+      "shadow-[var(--shadow-crisp-lg)]",
+    );
+    expect(screen.getByTestId("login-form-panel")).toHaveClass(
+      "border-2",
+      "bg-card",
+      "shadow-[var(--shadow-crisp-lg)]",
+    );
+    expect(screen.getByRole("heading", { name: /enter workspace/i })).toHaveClass("uppercase");
   });
 
   it("shows validation messages before submission", async () => {

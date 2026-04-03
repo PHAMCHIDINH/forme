@@ -8,9 +8,15 @@ import { portfolioData } from "./data";
 export function PortfolioPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-6 py-8 lg:px-10 lg:py-10">
-      <Panel className="overflow-hidden border-2 p-0 shadow-[var(--shadow-crisp-lg)]">
-        <div className="grid gap-0 lg:grid-cols-[1.35fr_0.85fr]">
-          <div className="space-y-6 bg-secondary px-6 py-8 lg:px-10 lg:py-12">
+      <Panel
+        className="overflow-hidden border-2 p-0 shadow-[var(--shadow-crisp-lg)]"
+        data-testid="portfolio-hero-shell"
+      >
+        <div className="grid gap-0 lg:grid-cols-[1.35fr_0.85fr]" data-testid="portfolio-hero-grid">
+          <div
+            className="space-y-6 bg-secondary px-6 py-8 lg:px-10 lg:py-12"
+            data-testid="portfolio-hero-primary"
+          >
             <p className="text-sm uppercase tracking-[0.24em] text-accent">
               {portfolioData.displayName}
             </p>
@@ -28,19 +34,16 @@ export function PortfolioPage() {
             </div>
           </div>
 
-          <div className="flex h-full flex-col justify-between bg-accent px-6 py-8 lg:px-8 lg:py-12">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-text">Role</p>
-              <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
-              <p className="mt-4 text-sm leading-7 text-text/80">
-                Building integrated digital systems with modular interfaces, stable APIs, and
-                production-ready workflows.
-              </p>
-            </div>
-            <div className="mt-8 border-t-2 border-text pt-6">
-              <p className="text-xs uppercase tracking-[0.24em] text-text/80">Mode</p>
-              <p className="mt-3 text-lg text-text">Poster framing for the public operating surface.</p>
-            </div>
+          <div
+            className="bg-accent px-6 py-8 lg:px-8 lg:py-12"
+            data-testid="portfolio-hero-aside"
+          >
+            <p className="text-sm text-muted">Role</p>
+            <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
+            <p className="mt-4 text-sm leading-7 text-muted">
+              Building integrated digital systems with modular interfaces, stable APIs, and
+              production-ready workflows.
+            </p>
           </div>
         </div>
       </Panel>
