@@ -66,14 +66,18 @@ describe("tailwind theme integration", () => {
   it("defines the dark-mode tokens required by the spec baseline", async () => {
     const cssPath = path.resolve(process.cwd(), "src/styles/globals.css");
     const input = await readFile(cssPath, "utf8");
-    const darkThemeBlock = input.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
+    const darkThemeBlock = input.match(/:root\[data-theme="dark"\],\s*\.dark\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
 
-    expect(input).toContain(':root[data-theme="dark"]');
-    expect(input).toContain(".dark");
+    expect(input).toMatch(/:root\[data-theme="dark"\],\s*\.dark\s*\{/);
     expect(darkThemeBlock).toContain("--background:");
     expect(darkThemeBlock).toContain("--foreground:");
     expect(darkThemeBlock).toContain("--border:");
     expect(darkThemeBlock).toContain("--ring:");
     expect(darkThemeBlock).toContain("--primary-hover:");
+    expect(darkThemeBlock).toContain("--surface-shell:");
+    expect(darkThemeBlock).toContain("--surface-panel-muted:");
+    expect(darkThemeBlock).toContain("--surface-panel-featured:");
+    expect(darkThemeBlock).toContain("--form-state-disabled-bg:");
+    expect(darkThemeBlock).toContain("--surface-panel:");
   });
 });
