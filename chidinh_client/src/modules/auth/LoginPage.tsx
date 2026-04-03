@@ -2,14 +2,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
+import { ActionArea, FormSection } from "../../shared/form-system/patterns";
+import { ErrorText, Label } from "../../shared/form-system/primitives";
 import { Button } from "../../shared/ui/Button";
-import { Field, FieldLabel, FieldMessage } from "../../shared/ui/Field";
 import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
 import { loginSchema, type LoginFormValues } from "./loginSchema";
 import { useLogin } from "./useSession";
 
 export function LoginPage() {
+  const usernameErrorId = "login-username-error";
+  const passwordErrorId = "login-password-error";
+  const inlineErrorClassName = "text-sm leading-6 text-[var(--form-state-error-text)]";
   const navigate = useNavigate();
   const loginMutation = useLogin();
   const {
@@ -51,40 +55,66 @@ export function LoginPage() {
         </Panel>
 
         <Panel className="p-8 lg:p-10">
-          <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>
-            <Field>
-              <FieldLabel htmlFor="username">Username</FieldLabel>
-              <Input id="username" autoComplete="username" {...register("username")} />
-              {errors.username ? (
-                <FieldMessage tone="error">{errors.username.message}</FieldMessage>
-              ) : null}
-            </Field>
+          <form noValidate onSubmit={handleSubmit(onSubmit)}>
+            <FormSection
+              className="space-y-0 border-0 bg-transparent p-0 shadow-none"
+              body={
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      autoComplete="username"
+                      aria-describedby={errors.username ? usernameErrorId : undefined}
+                      aria-invalid={errors.username ? "true" : undefined}
+                      {...register("username")}
+                    />
+                    {errors.username ? (
+                      <p id={usernameErrorId} className={inlineErrorClassName}>
+                        {errors.username.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-            <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                {...register("password")}
-              />
-              {errors.password ? (
-                <FieldMessage tone="error">{errors.password.message}</FieldMessage>
-              ) : null}
-            </Field>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      aria-describedby={errors.password ? passwordErrorId : undefined}
+                      aria-invalid={errors.password ? "true" : undefined}
+                      {...register("password")}
+                    />
+                    {errors.password ? (
+                      <p id={passwordErrorId} className={inlineErrorClassName}>
+                        {errors.password.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-            {loginMutation.isError ? (
-              <FieldMessage tone="error">Invalid credentials. Please try again.</FieldMessage>
-            ) : null}
-
-            <Button
-              className="w-full"
-              type="submit"
-              disabled={loginMutation.isPending}
-              pending={loginMutation.isPending}
-            >
-              {loginMutation.isPending ? "Opening Workspace..." : "Enter Workspace"}
-            </Button>
+                  {loginMutation.isError ? (
+                    <ErrorText>Invalid credentials. Please try again.</ErrorText>
+                  ) : null}
+                </div>
+              }
+              actions={
+                <ActionArea
+                  className="[&>[data-slot=action-area-primary]]:w-full"
+                  data-testid="form-action-area"
+                  primary={
+                    <Button
+                      className="w-full"
+                      type="submit"
+                      disabled={loginMutation.isPending}
+                      pending={loginMutation.isPending}
+                    >
+                      {loginMutation.isPending ? "Opening Workspace..." : "Enter Workspace"}
+                    </Button>
+                  }
+                />
+              }
+            />
           </form>
         </Panel>
       </div>

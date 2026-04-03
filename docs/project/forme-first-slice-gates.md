@@ -2,6 +2,11 @@
 
 Updated: 2026-04-02
 
+Governance:
+- Exception log: `docs/project/2026-04-02-form-system-exception-log.md`
+- Deprecation plan: `docs/project/2026-04-02-form-system-deprecation-plan.md`
+- Legacy behavior stays open only when it is tracked in the exception log and covered by the deprecation plan milestones.
+
 ## Gate A (state evidence)
 - [x] default
 - [x] hover
@@ -34,7 +39,22 @@ Evidence:
 - `:root[data-ui-reduction="true"]` in `src/styles/globals.css`
 - `src/test/dashboard.reduction.test.tsx`
 
-## Gate D (no-local-hack)
+## Gate D (rollout control)
+- [x] new forms use the current system path by default
+- [x] legacy patterns for new forms are blocked unless an exception is logged
+- [x] exception entries have owner, review date, and sunset date
+- [x] deprecation milestones define when bridge compatibility is removed
+
+Evidence:
+- `docs/project/2026-04-02-form-system-exception-log.md` reviewed on the release checklist before merge
+- exception log entries include an approval record and next review/sunset date
+- release train checklist references `docs/project/2026-04-02-form-system-deprecation-plan.md` for R+1/R+2/R+3 exit criteria
+- rollout review notes show exception backlog count and disposition at each gate review
+- `docs/project/2026-04-02-form-system-exception-log.md`
+- `docs/project/2026-04-02-form-system-deprecation-plan.md`
+- `docs/project/2026-04-02-form-system-v1-kickoff-locks.md`
+
+## Gate E (no-local-hack)
 - [x] no route-local rescue spacing/border/radius overrides
 - [x] no dashboard-only primitive variants
 - [x] no shell leak into generic primitives
@@ -42,3 +62,4 @@ Evidence:
 Audit notes:
 - Dashboard layout uses shared primitives (`Panel`, `Button`, `ContextToolbar`) directly.
 - No local override marker or one-off token escape hatch introduced.
+- Any future exception for a local override should be logged against the governance docs above before landing.

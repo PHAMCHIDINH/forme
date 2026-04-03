@@ -30,6 +30,14 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
     expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/username/i)).toHaveAttribute(
+      "aria-describedby",
+      "login-username-error",
+    );
+    expect(screen.getByLabelText(/password/i)).toHaveAttribute(
+      "aria-describedby",
+      "login-password-error",
+    );
   });
 
   it("submits credentials and navigates to the private app", async () => {
@@ -53,6 +61,31 @@ describe("LoginPage", () => {
     });
   });
 
+  it("shows a pending submit state while login is in flight", async () => {
+    let resolveLogin: ((response: Response) => void) | undefined;
+    mockFetchSequence(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveLogin = resolve;
+        }),
+    );
+    const user = userEvent.setup();
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText(/username/i), "ada");
+    await user.type(screen.getByLabelText(/password/i), "swordfish");
+    await user.click(screen.getByRole("button", { name: /enter workspace/i }));
+
+    expect(await screen.findByRole("button", { name: /opening workspace/i })).toBeDisabled();
+
+    resolveLogin?.(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+    );
+
+    expect(await screen.findByText("Private dashboard")).toBeInTheDocument();
+  });
+
   it("shows invalid credential feedback as an alert", async () => {
     mockFetchSequence(
       jsonResponse(
@@ -71,6 +104,8 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText(/password/i), "wrong");
     await user.click(screen.getByRole("button", { name: /enter workspace/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid credentials/i);
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(/invalid credentials/i);
   });
 });
