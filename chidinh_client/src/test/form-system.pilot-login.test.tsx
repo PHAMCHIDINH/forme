@@ -51,6 +51,6 @@ describe("LoginPage form-system pilot", () => {
 
     expect(shell).toHaveClass("grid");
     expect(shell).toHaveClass("gap-6");
-    expect(shell).toHaveClass("lg:grid-cols-[1fr_0.9fr]");
+    expect(shell).toHaveClass("lg:grid-cols-[1fr_0.92fr]");
   });
 });

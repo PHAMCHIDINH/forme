@@ -3,13 +3,25 @@ import { MemoryRouter } from "react-router-dom";
 
 import { AppRoutes } from "../app/router/AppRouter";
 
+function renderPortfolioPage() {
+  return render(
+    <MemoryRouter initialEntries={["/"]}>
+      <AppRoutes />
+    </MemoryRouter>,
+  );
+}
+
 describe("PortfolioPage", () => {
-  it("renders the public hub sections and workspace entry points", () => {
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <AppRoutes />
-      </MemoryRouter>,
+  it("renders the portfolio hero with framed RetroUI blocks", () => {
+    renderPortfolioPage();
+
+    expect(screen.getByRole("heading", { name: /personal digital hub/i }).className).toContain(
+      "uppercase",
     );
+  });
+
+  it("renders the public hub sections and workspace entry points", () => {
+    renderPortfolioPage();
 
     expect(screen.getByRole("heading", { level: 1, name: /personal digital hub/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /explore systems/i })).toBeInTheDocument();

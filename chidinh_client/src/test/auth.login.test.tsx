@@ -22,6 +22,13 @@ function renderLoginRoute() {
 }
 
 describe("LoginPage", () => {
+  it("renders the login shell as two framed panels", () => {
+    renderLoginRoute();
+
+    expect(screen.getAllByText(/private hub|enter workspace/i).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("login-shell-grid").className).toContain("lg:grid-cols");
+  });
+
   it("shows validation messages before submission", async () => {
     const user = userEvent.setup();
 

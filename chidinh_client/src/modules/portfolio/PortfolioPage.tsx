@@ -7,14 +7,14 @@ import { portfolioData } from "./data";
 
 export function PortfolioPage() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-8 lg:px-10 lg:py-10">
-      <Panel className="overflow-hidden px-6 py-8 lg:px-10 lg:py-12">
-        <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
-          <div className="space-y-6">
+    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-10 px-6 py-8 lg:px-10 lg:py-10">
+      <Panel className="overflow-hidden border-2 p-0 shadow-[var(--shadow-crisp-lg)]">
+        <div className="grid gap-0 lg:grid-cols-[1.35fr_0.85fr]">
+          <div className="space-y-6 bg-secondary px-6 py-8 lg:px-10 lg:py-12">
             <p className="text-sm uppercase tracking-[0.24em] text-accent">
               {portfolioData.displayName}
             </p>
-            <h1 className="max-w-3xl font-display text-5xl leading-tight text-text">
+            <h1 className="max-w-3xl font-display text-5xl uppercase leading-tight tracking-[0.08em] text-text">
               Personal Digital Hub
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted">{portfolioData.intro}</p>
@@ -28,14 +28,20 @@ export function PortfolioPage() {
             </div>
           </div>
 
-          <Panel className="p-6" variant="muted">
-            <p className="text-sm text-muted">Role</p>
-            <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
-            <p className="mt-4 text-sm leading-7 text-muted">
-              Building integrated digital systems with modular interfaces, stable APIs, and
-              production-ready workflows.
-            </p>
-          </Panel>
+          <div className="flex h-full flex-col justify-between bg-accent px-6 py-8 lg:px-8 lg:py-12">
+            <div>
+              <p className="text-sm uppercase tracking-[0.24em] text-text">Role</p>
+              <p className="mt-3 text-2xl font-display text-text">{portfolioData.title}</p>
+              <p className="mt-4 text-sm leading-7 text-text/80">
+                Building integrated digital systems with modular interfaces, stable APIs, and
+                production-ready workflows.
+              </p>
+            </div>
+            <div className="mt-8 border-t-2 border-text pt-6">
+              <p className="text-xs uppercase tracking-[0.24em] text-text/80">Mode</p>
+              <p className="mt-3 text-lg text-text">Poster framing for the public operating surface.</p>
+            </div>
+          </div>
         </div>
       </Panel>
 

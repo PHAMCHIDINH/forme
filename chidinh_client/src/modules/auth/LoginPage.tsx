@@ -42,14 +42,16 @@ export function LoginPage() {
 
   return (
     <main
-      className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 lg:px-10"
+      className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10"
       data-slot="login-page"
       data-theme={activeTheme}
     >
-      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]" data-testid="login-shell-grid">
-        <Panel className="p-8 lg:p-10">
+      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.92fr]" data-testid="login-shell-grid">
+        <Panel className="border-2 bg-secondary p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10">
           <p className="text-sm uppercase tracking-[0.24em] text-accent">Private Hub</p>
-          <h1 className="mt-4 font-display text-4xl text-text">Enter Workspace</h1>
+          <h1 className="mt-4 font-display text-4xl uppercase tracking-[0.08em] text-text">
+            Enter Workspace
+          </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-muted">
             Sign in to access the operational side of the hub and manage active workflows.
           </p>
@@ -61,7 +63,7 @@ export function LoginPage() {
           </Link>
         </Panel>
 
-        <Panel className="p-8 lg:p-10">
+        <Panel className="border-2 bg-card p-8 shadow-[var(--shadow-crisp-lg)] lg:p-10">
           <form noValidate onSubmit={handleSubmit(onSubmit)}>
             <FormSection
               className="space-y-0 border-0 bg-transparent p-0 shadow-none"
