@@ -83,3 +83,11 @@ export function renderWithQueryClient(ui: ReactNode) {
     ...render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>),
   };
 }
+
+export function setDocumentTheme(theme: "light" | "dark") {
+  document.documentElement.dataset.theme = theme;
+}
+
+export function clearDocumentTheme() {
+  delete document.documentElement.dataset.theme;
+}

@@ -1,11 +1,17 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, test, vi } from "vitest";
 
+import { Button as PrimitiveButton } from "../shared/form-system/primitives/Button";
+import { Checkbox } from "../shared/form-system/primitives/Checkbox";
 import { ErrorText } from "../shared/form-system/primitives/ErrorText";
 import { HelperText } from "../shared/form-system/primitives/HelperText";
 import { InputShell } from "../shared/form-system/primitives/InputShell";
 import { Label } from "../shared/form-system/primitives/Label";
+import { Radio } from "../shared/form-system/primitives/Radio";
 import { SelectTrigger } from "../shared/form-system/primitives/SelectTrigger";
+import { Surface } from "../shared/form-system/primitives/Surface";
+import { Switch } from "../shared/form-system/primitives/Switch";
 import { TextareaShell } from "../shared/form-system/primitives/TextareaShell";
 import { InlineFeedback } from "../shared/ui/InlineFeedback";
 import { Input } from "../shared/ui/Input";
@@ -95,5 +101,50 @@ describe("form system primitives", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Helpful guidance");
     expect(screen.getByRole("alert")).toHaveTextContent("Problem to fix");
+  });
+
+  test("renders Checkbox with checkbox semantics", () => {
+    render(<Checkbox aria-label="Subscribe" defaultChecked />);
+
+    expect(screen.getByRole("checkbox", { name: "Subscribe" })).toBeChecked();
+  });
+
+  test("renders Radio with radio semantics", () => {
+    render(<Radio aria-label="Primary option" name="priority" defaultChecked />);
+
+    expect(screen.getByRole("radio", { name: "Primary option" })).toBeChecked();
+  });
+
+  test("renders Switch with switch semantics and change callback", async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+
+    render(<Switch aria-label="Notifications" checked={false} onCheckedChange={onCheckedChange} />);
+
+    await user.click(screen.getByRole("switch", { name: "Notifications" }));
+
+    expect(screen.getByRole("switch", { name: "Notifications" })).toHaveAttribute("aria-checked", "false");
+    expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  test("renders primitive Button with shared button behavior", () => {
+    render(
+      <PrimitiveButton pending type="button">
+        Save
+      </PrimitiveButton>,
+    );
+
+    expect(screen.getByRole("button", { name: "Save" })).toHaveAttribute("data-pending", "true");
+  });
+
+  test("renders Surface as a panel-like primitive container", () => {
+    render(
+      <Surface className="custom-surface" data-testid="surface" variant="featured">
+        Surface content
+      </Surface>,
+    );
+
+    const surface = screen.getByTestId("surface");
+    expect(surface).toHaveClass("custom-surface");
   });
 });

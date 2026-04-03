@@ -29,4 +29,23 @@ describe("LoginPage form-system pilot", () => {
     expect(screen.getByRole("button", { name: /enter workspace/i })).toBeInTheDocument();
     expect(screen.getByTestId("form-action-area")).toBeInTheDocument();
   });
+
+  test("keeps helper text wired to the username field", () => {
+    renderLoginRoute();
+
+    const username = screen.getByLabelText(/username/i);
+
+    expect(username).toHaveAttribute("aria-describedby", "login-username-helper");
+    expect(screen.getByText(/use your workspace handle/i)).toBeInTheDocument();
+  });
+
+  test("keeps the login shell single-column by default and upgrades to the desktop split only at lg", () => {
+    renderLoginRoute();
+
+    const shell = screen.getByTestId("login-shell-grid");
+
+    expect(shell).toHaveClass("grid");
+    expect(shell).toHaveClass("gap-6");
+    expect(shell).toHaveClass("lg:grid-cols-[1fr_0.9fr]");
+  });
 });

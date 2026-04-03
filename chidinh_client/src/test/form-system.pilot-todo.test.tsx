@@ -41,6 +41,46 @@ describe("TodoPage form-system pilot", () => {
     expect(screen.getByLabelText(/task title/i)).toHaveAttribute("aria-invalid", "true");
   });
 
+  test("keeps title helper text visible while inline error is active", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({ items: [] }),
+    );
+    const user = userEvent.setup();
+
+    renderTodoRoute();
+    await screen.findByRole("heading", { name: /personal tasks/i });
+
+    expect(screen.getByText(/summarize the task in one line/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /add task/i }));
+
+    expect(screen.getByText(/summarize the task in one line/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/task title/i)).toHaveAttribute(
+      "aria-describedby",
+      expect.stringContaining("todo-title-helper"),
+    );
+  });
+
+  test("keeps the summary, field rows, and action area in one reading flow", async () => {
+    mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({ items: [] }),
+    );
+
+    const { container } = renderTodoRoute();
+    await screen.findByRole("heading", { name: /personal tasks/i });
+
+    const summary = container.querySelector('[data-slot="validation-summary"]');
+    const rows = container.querySelectorAll('[data-slot="field-row"]');
+    const actionArea = container.querySelector('[data-slot="action-area"]');
+
+    expect(rows[0]).toHaveAttribute("data-columns", "1");
+    expect(rows[1]).toHaveAttribute("data-columns", "2");
+    expect(actionArea).toBeInTheDocument();
+    expect(summary).not.toBeInTheDocument();
+  });
+
   test("clears hidden due date state when status change hides the dependent field", async () => {
     const fetchMock = mockFetchSequence(
       jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),

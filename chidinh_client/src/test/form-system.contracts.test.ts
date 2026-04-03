@@ -45,13 +45,13 @@ describe("form system contracts", () => {
   it("rejects two-column eligibility when helper text is likely long", () => {
     expect(
       isTwoColumnEligible({
-        layoutHasRoom: true,
-        labelIsShort: true,
-        controlIsCompact: true,
-        helperTextIsShort: false,
-        fieldHasSingleControl: true,
-        fieldHasNoSupplementaryHint: true,
-        fieldCanStayAligned: true,
+        fieldsAreLogicallyIndependent: true,
+        scanOrderIsNotStronglySequential: true,
+        helperAndErrorTextStayCompact: false,
+        mobileCollapsePreservesGrouping: true,
+        hasNoCrossColumnDependencyReveal: true,
+        summaryAndActionsStayInNaturalFlow: true,
+        errorStateRemainsReadable: true,
       }),
     ).toBe(false);
   });
@@ -59,37 +59,37 @@ describe("form system contracts", () => {
   it("accepts two-column eligibility only when all seven conditions are satisfied", () => {
     expect(
       isTwoColumnEligible({
-        layoutHasRoom: true,
-        labelIsShort: true,
-        controlIsCompact: true,
-        helperTextIsShort: true,
-        fieldHasSingleControl: true,
-        fieldHasNoSupplementaryHint: true,
-        fieldCanStayAligned: true,
+        fieldsAreLogicallyIndependent: true,
+        scanOrderIsNotStronglySequential: true,
+        helperAndErrorTextStayCompact: true,
+        mobileCollapsePreservesGrouping: true,
+        hasNoCrossColumnDependencyReveal: true,
+        summaryAndActionsStayInNaturalFlow: true,
+        errorStateRemainsReadable: true,
       }),
     ).toBe(true);
   });
 
   it("rejects two-column eligibility when any single criterion is false", () => {
     const baseCriteria = {
-      layoutHasRoom: true,
-      labelIsShort: true,
-      controlIsCompact: true,
-      helperTextIsShort: true,
-      fieldHasSingleControl: true,
-      fieldHasNoSupplementaryHint: true,
-      fieldCanStayAligned: true,
+      fieldsAreLogicallyIndependent: true,
+      scanOrderIsNotStronglySequential: true,
+      helperAndErrorTextStayCompact: true,
+      mobileCollapsePreservesGrouping: true,
+      hasNoCrossColumnDependencyReveal: true,
+      summaryAndActionsStayInNaturalFlow: true,
+      errorStateRemainsReadable: true,
     };
 
     (
       [
-        "layoutHasRoom",
-        "labelIsShort",
-        "controlIsCompact",
-        "helperTextIsShort",
-        "fieldHasSingleControl",
-        "fieldHasNoSupplementaryHint",
-        "fieldCanStayAligned",
+        "fieldsAreLogicallyIndependent",
+        "scanOrderIsNotStronglySequential",
+        "helperAndErrorTextStayCompact",
+        "mobileCollapsePreservesGrouping",
+        "hasNoCrossColumnDependencyReveal",
+        "summaryAndActionsStayInNaturalFlow",
+        "errorStateRemainsReadable",
       ] as const
     ).forEach((criterion) => {
       expect(

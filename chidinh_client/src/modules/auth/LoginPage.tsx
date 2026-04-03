@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ActionArea, FormSection } from "../../shared/form-system/patterns";
-import { ErrorText, Label } from "../../shared/form-system/primitives";
+import { ErrorText, HelperText, Label } from "../../shared/form-system/primitives";
 import { Button } from "../../shared/ui/Button";
 import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
@@ -12,8 +12,9 @@ import { useLogin } from "./useSession";
 
 export function LoginPage() {
   const usernameErrorId = "login-username-error";
+  const usernameHelperId = "login-username-helper";
   const passwordErrorId = "login-password-error";
-  const inlineErrorClassName = "text-sm leading-6 text-[var(--form-state-error-text)]";
+  const passwordHelperId = "login-password-helper";
   const navigate = useNavigate();
   const loginMutation = useLogin();
   const {
@@ -37,9 +38,15 @@ export function LoginPage() {
     }
   };
 
+  const activeTheme = typeof document === "undefined" ? "light" : document.documentElement.dataset.theme ?? "light";
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 lg:px-10">
-      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
+    <main
+      className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 lg:px-10"
+      data-slot="login-page"
+      data-theme={activeTheme}
+    >
+      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]" data-testid="login-shell-grid">
         <Panel className="p-8 lg:p-10">
           <p className="text-sm uppercase tracking-[0.24em] text-accent">Private Hub</p>
           <h1 className="mt-4 font-display text-4xl text-text">Enter Workspace</h1>
@@ -65,14 +72,17 @@ export function LoginPage() {
                     <Input
                       id="username"
                       autoComplete="username"
-                      aria-describedby={errors.username ? usernameErrorId : undefined}
+                      aria-describedby={errors.username ? `${usernameHelperId} ${usernameErrorId}` : usernameHelperId}
                       aria-invalid={errors.username ? "true" : undefined}
                       {...register("username")}
                     />
+                    <HelperText id={usernameHelperId}>
+                      Use your workspace handle, not your public display name.
+                    </HelperText>
                     {errors.username ? (
-                      <p id={usernameErrorId} className={inlineErrorClassName}>
+                      <ErrorText id={usernameErrorId}>
                         {errors.username.message}
-                      </p>
+                      </ErrorText>
                     ) : null}
                   </div>
 
@@ -82,14 +92,17 @@ export function LoginPage() {
                       id="password"
                       type="password"
                       autoComplete="current-password"
-                      aria-describedby={errors.password ? passwordErrorId : undefined}
+                      aria-describedby={errors.password ? `${passwordHelperId} ${passwordErrorId}` : passwordHelperId}
                       aria-invalid={errors.password ? "true" : undefined}
                       {...register("password")}
                     />
+                    <HelperText id={passwordHelperId}>
+                      Use the same password you configured for the private workspace.
+                    </HelperText>
                     {errors.password ? (
-                      <p id={passwordErrorId} className={inlineErrorClassName}>
+                      <ErrorText id={passwordErrorId}>
                         {errors.password.message}
-                      </p>
+                      </ErrorText>
                     ) : null}
                   </div>
 

@@ -1,21 +1,21 @@
 export type TwoColumnEligibilityCriteria = {
-  layoutHasRoom: boolean;
-  labelIsShort: boolean;
-  controlIsCompact: boolean;
-  helperTextIsShort: boolean;
-  fieldHasSingleControl: boolean;
-  fieldHasNoSupplementaryHint: boolean;
-  fieldCanStayAligned: boolean;
+  fieldsAreLogicallyIndependent: boolean;
+  scanOrderIsNotStronglySequential: boolean;
+  helperAndErrorTextStayCompact: boolean;
+  mobileCollapsePreservesGrouping: boolean;
+  hasNoCrossColumnDependencyReveal: boolean;
+  summaryAndActionsStayInNaturalFlow: boolean;
+  errorStateRemainsReadable: boolean;
 };
 
 export function isTwoColumnEligible(criteria: TwoColumnEligibilityCriteria): boolean {
   return (
-    criteria.layoutHasRoom &&
-    criteria.labelIsShort &&
-    criteria.controlIsCompact &&
-    criteria.helperTextIsShort &&
-    criteria.fieldHasSingleControl &&
-    criteria.fieldHasNoSupplementaryHint &&
-    criteria.fieldCanStayAligned
+    criteria.fieldsAreLogicallyIndependent &&
+    criteria.scanOrderIsNotStronglySequential &&
+    criteria.helperAndErrorTextStayCompact &&
+    criteria.mobileCollapsePreservesGrouping &&
+    criteria.hasNoCrossColumnDependencyReveal &&
+    criteria.summaryAndActionsStayInNaturalFlow &&
+    criteria.errorStateRemainsReadable
   );
 }

@@ -38,4 +38,19 @@ describe("tailwind theme integration", () => {
     expect(input).toContain("--color-surfaceAlt");
     expect(input).not.toContain("--color-surface-alt");
   });
+
+  it("defines the dark-mode form tokens required by the spec baseline", async () => {
+    const cssPath = path.resolve(process.cwd(), "src/styles/globals.css");
+    const input = await readFile(cssPath, "utf8");
+    const darkThemeBlock = input.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
+
+    expect(input).toContain(':root[data-theme="dark"]');
+    expect(darkThemeBlock).toContain("--surface-canvas:");
+    expect(darkThemeBlock).toContain("--surface-panel:");
+    expect(darkThemeBlock).toContain("--border-default:");
+    expect(darkThemeBlock).toContain("--foreground:");
+    expect(darkThemeBlock).toContain("--focus-ring:");
+    expect(darkThemeBlock).toContain("--form-state-error-border:");
+    expect(darkThemeBlock).toContain("--form-state-disabled-bg:");
+  });
 });

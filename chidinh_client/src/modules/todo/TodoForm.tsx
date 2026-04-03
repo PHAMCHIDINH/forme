@@ -7,12 +7,37 @@ import {
   ValidationSummary,
   type ValidationSummaryError,
 } from "../../shared/form-system/patterns";
-import { ErrorText, Label } from "../../shared/form-system/primitives";
+import { isTwoColumnEligible } from "../../shared/form-system/contracts/twoColumnEligibility";
+import { ErrorText, HelperText, Label } from "../../shared/form-system/primitives";
 import { Button } from "../../shared/ui/Button";
 import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
 import { TaskPriority, TaskStatus } from "./taskTypes";
 import { TaskFormState } from "./todoFormState";
+
+const TITLE_AND_DUE_DATE_COLUMNS: 1 | 2 = isTwoColumnEligible({
+  fieldsAreLogicallyIndependent: false,
+  scanOrderIsNotStronglySequential: false,
+  helperAndErrorTextStayCompact: true,
+  mobileCollapsePreservesGrouping: true,
+  hasNoCrossColumnDependencyReveal: false,
+  summaryAndActionsStayInNaturalFlow: true,
+  errorStateRemainsReadable: true,
+})
+  ? 2
+  : 1;
+
+const STATUS_AND_PRIORITY_COLUMNS: 1 | 2 = isTwoColumnEligible({
+  fieldsAreLogicallyIndependent: true,
+  scanOrderIsNotStronglySequential: true,
+  helperAndErrorTextStayCompact: true,
+  mobileCollapsePreservesGrouping: true,
+  hasNoCrossColumnDependencyReveal: true,
+  summaryAndActionsStayInNaturalFlow: true,
+  errorStateRemainsReadable: true,
+})
+  ? 2
+  : 1;
 
 type TodoFormProps = {
   formState: TaskFormState;
@@ -61,24 +86,29 @@ export function TodoForm({
   onDescriptionInput,
   onCancelEdit,
 }: TodoFormProps) {
+  const titleHelperId = "todo-title-helper";
   const titleErrorId = "todo-title-error";
+  const dueDateHelperId = "todo-due-helper";
 
   return (
     <Panel className="p-6">
       <form className="space-y-5" noValidate onSubmit={onSubmit}>
         <ValidationSummary errors={validationErrors} />
 
-        <FieldRow columns={2}>
+        <FieldRow columns={TITLE_AND_DUE_DATE_COLUMNS} data-testid="todo-primary-row">
           <div className="space-y-2">
             <Label htmlFor="todo-title">Task Title</Label>
             <Input
               id="todo-title"
-              aria-describedby={titleError ? titleErrorId : undefined}
+              aria-describedby={titleError ? `${titleHelperId} ${titleErrorId}` : titleHelperId}
               aria-invalid={titleError ? "true" : undefined}
               placeholder="Add a new task"
               value={formState.title}
               onChange={(event) => onTitleChange(event.target.value)}
             />
+            <HelperText id={titleHelperId}>
+              Summarize the task in one line so it still scans cleanly in lists.
+            </HelperText>
             {titleError ? <ErrorText id={titleErrorId}>{titleError}</ErrorText> : null}
           </div>
           <ConditionalFieldBlock visible={isDueDateVisible} className="space-y-2">
@@ -86,13 +116,17 @@ export function TodoForm({
             <Input
               id="todo-due"
               type="date"
+              aria-describedby={dueDateHelperId}
               value={formState.dueOn}
               onChange={(event) => onDueOnChange(event.target.value)}
             />
+            <HelperText id={dueDateHelperId}>
+              Leave blank when the task should stay unscheduled.
+            </HelperText>
           </ConditionalFieldBlock>
         </FieldRow>
 
-        <FieldRow columns={2}>
+        <FieldRow columns={STATUS_AND_PRIORITY_COLUMNS} data-testid="todo-status-row">
           <div className="space-y-2">
             <Label htmlFor="todo-status">Status</Label>
             <select

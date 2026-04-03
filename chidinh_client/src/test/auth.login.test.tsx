@@ -32,11 +32,11 @@ describe("LoginPage", () => {
     expect(screen.getByText(/password is required/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toHaveAttribute(
       "aria-describedby",
-      "login-username-error",
+      "login-username-helper login-username-error",
     );
     expect(screen.getByLabelText(/password/i)).toHaveAttribute(
       "aria-describedby",
-      "login-password-error",
+      "login-password-helper login-password-error",
     );
   });
 

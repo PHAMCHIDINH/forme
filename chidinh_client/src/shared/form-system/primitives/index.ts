@@ -1,6 +1,11 @@
+export { Button } from "./Button";
+export { Checkbox } from "./Checkbox";
 export { ErrorText } from "./ErrorText";
 export { HelperText } from "./HelperText";
 export { InputShell } from "./InputShell";
 export { Label } from "./Label";
+export { Radio } from "./Radio";
 export { SelectTrigger } from "./SelectTrigger";
+export { Surface } from "./Surface";
+export { Switch } from "./Switch";
 export { TextareaShell } from "./TextareaShell";
