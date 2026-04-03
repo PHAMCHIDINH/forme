@@ -3,9 +3,16 @@ import { render, screen } from "@testing-library/react";
 import { Panel } from "../shared/ui/Panel";
 
 describe("Panel", () => {
-  it("supports a muted surface variant for secondary content blocks", () => {
-    render(<Panel variant="muted">Secondary surface</Panel>);
+  it("renders panel variants with RetroUI framing", () => {
+    render(
+      <Panel data-testid="panel" variant="featured">
+        Retro block
+      </Panel>,
+    );
 
-    expect(screen.getByText("Secondary surface")).toHaveClass("bg-surfaceAlt");
+    const panel = screen.getByTestId("panel");
+    expect(panel.className).toContain("border-2");
+    expect(panel.className).toContain("shadow-[var(--shadow-crisp-md)]");
+    expect(panel.className).toContain("bg-[var(--surface-panel-featured)]");
   });
 });

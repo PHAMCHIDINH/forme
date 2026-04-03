@@ -4,6 +4,15 @@ import { MemoryRouter, Link } from "react-router-dom";
 import { Button } from "../shared/ui/Button";
 
 describe("Button", () => {
+  it("renders the primary button as a filled RetroUI CTA", () => {
+    render(<Button type="button">Open Workspace</Button>);
+
+    const button = screen.getByRole("button", { name: /open workspace/i });
+    expect(button.className).toContain("bg-primary");
+    expect(button.className).toContain("border-2");
+    expect(button.className).toContain("shadow-[var(--shadow-crisp-sm)]");
+  });
+
   it("renders a native button by default", () => {
     render(
       <Button disabled type="button">

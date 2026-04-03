@@ -1,13 +1,13 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { PropsWithChildren } from "react";
 
-const panelVariants = cva("rounded-[var(--radius-lg)] border", {
+const panelVariants = cva("rounded-[var(--radius-lg)] border-2 shadow-[var(--shadow-crisp-md)]", {
   variants: {
     variant: {
-      default: "border-[var(--border-default)] bg-[var(--surface-panel)]",
-      muted: "border-[var(--border-subtle)] bg-surfaceAlt bg-[var(--surface-panel-muted)]",
-      featured: "border-[var(--border-strong)] bg-[var(--surface-panel-featured)] shadow-md",
-      shell: "border-[var(--border-default)] bg-[var(--surface-shell)] shadow-sm",
+      default: "border-[var(--border)] bg-[var(--surface-panel)] text-card-foreground",
+      muted: "border-[var(--border)] bg-secondary text-secondary-foreground",
+      featured: "border-[var(--border)] bg-[var(--surface-panel-featured)] text-accent-foreground",
+      shell: "border-[var(--border)] bg-[var(--surface-shell)] text-foreground",
     },
   },
   defaultVariants: {
