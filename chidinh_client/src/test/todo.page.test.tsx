@@ -136,7 +136,7 @@ describe("TodoPage", () => {
     await screen.findByRole("heading", { name: /personal tasks/i });
 
     await user.type(screen.getByLabelText(/task title/i), "Ship MVP");
-    await user.selectOptions(screen.getByLabelText(/status/i), "done");
+    await user.selectOptions(screen.getByLabelText(/status/i), "in_progress");
     await user.selectOptions(screen.getByLabelText(/priority/i), "high");
     await user.type(screen.getByLabelText(/due date/i), "2026-04-03");
     await user.click(screen.getByRole("button", { name: /\+ #work/i }));
@@ -165,7 +165,7 @@ describe("TodoPage", () => {
     const payload = JSON.parse(String(postCall?.[1]?.body)) as Record<string, unknown>;
 
     expect(payload.title).toBe("Ship MVP");
-    expect(payload.status).toBe("done");
+    expect(payload.status).toBe("in_progress");
     expect(payload.priority).toBe("high");
     expect(payload.tags).toEqual(["work", "deep"]);
     expect(payload.descriptionHtml).toContain("<strong>");
@@ -191,7 +191,7 @@ describe("TodoPage", () => {
           id: "task-1",
           title: "Cross midnight due",
           status: "done",
-          dueAt: "2026-04-03T17:00:00.000Z",
+          dueAt: null,
           tags: ["work"],
         }),
       }),
@@ -201,7 +201,7 @@ describe("TodoPage", () => {
             id: "task-1",
             title: "Cross midnight due",
             status: "done",
-            dueAt: "2026-04-03T17:00:00.000Z",
+            dueAt: null,
             tags: ["work"],
           }),
         ],
@@ -230,5 +230,65 @@ describe("TodoPage", () => {
     });
     const payload = JSON.parse(String(patchCall?.[1]?.body)) as Record<string, unknown>;
     expect(payload.status).toBe("done");
+    expect(payload.dueAt).toBeNull();
+  });
+
+  it("clears due date when quick status change sets a task to cancelled from list view", async () => {
+    const fetchMock = mockFetchSequence(
+      jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }),
+      jsonResponse({
+        items: [
+          sampleTask({
+            id: "task-9",
+            title: "Sunset checklist",
+            status: "in_progress",
+            dueAt: "2026-04-03T17:00:00.000Z",
+            tags: ["ops"],
+          }),
+        ],
+      }),
+      jsonResponse({
+        item: sampleTask({
+          id: "task-9",
+          title: "Sunset checklist",
+          status: "cancelled",
+          dueAt: null,
+          tags: ["ops"],
+        }),
+      }),
+      jsonResponse({
+        items: [
+          sampleTask({
+            id: "task-9",
+            title: "Sunset checklist",
+            status: "cancelled",
+            dueAt: null,
+            tags: ["ops"],
+          }),
+        ],
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderTodoRoute();
+    expect(await screen.findByText("Sunset checklist")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/status for sunset checklist/i), "cancelled");
+
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find((call) => {
+        const init = call[1] as RequestInit | undefined;
+        return init?.method === "PATCH";
+      });
+      expect(patchCall).toBeDefined();
+    });
+
+    const patchCall = fetchMock.mock.calls.find((call) => {
+      const init = call[1] as RequestInit | undefined;
+      return init?.method === "PATCH";
+    });
+    const payload = JSON.parse(String(patchCall?.[1]?.body)) as Record<string, unknown>;
+    expect(payload.status).toBe("cancelled");
+    expect(payload.dueAt).toBeNull();
   });
 });

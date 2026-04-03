@@ -1,5 +1,15 @@
 import type { MutableRefObject } from "react";
 
+import {
+  ActionArea,
+  ConditionalFieldBlock,
+  FieldRow,
+  ValidationSummary,
+  type ValidationSummaryError,
+} from "../../shared/form-system/patterns";
+import { ErrorText, Label } from "../../shared/form-system/primitives";
+import { Button } from "../../shared/ui/Button";
+import { Input } from "../../shared/ui/Input";
 import { Panel } from "../../shared/ui/Panel";
 import { TaskPriority, TaskStatus } from "./taskTypes";
 import { TaskFormState } from "./todoFormState";
@@ -8,8 +18,11 @@ type TodoFormProps = {
   formState: TaskFormState;
   tagInput: string;
   tagSuggestions: string[];
+  validationErrors: ValidationSummaryError[];
+  titleError: string | null;
   formError: string | null;
   editingTaskId: string | null;
+  isDueDateVisible: boolean;
   isSubmitting: boolean;
   descriptionEditorRef: MutableRefObject<HTMLDivElement | null>;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -29,8 +42,11 @@ export function TodoForm({
   formState,
   tagInput,
   tagSuggestions,
+  validationErrors,
+  titleError,
   formError,
   editingTaskId,
+  isDueDateVisible,
   isSubmitting,
   descriptionEditorRef,
   onSubmit,
@@ -45,33 +61,40 @@ export function TodoForm({
   onDescriptionInput,
   onCancelEdit,
 }: TodoFormProps) {
+  const titleErrorId = "todo-title-error";
+
   return (
     <Panel className="p-6">
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <div className="grid gap-3 md:grid-cols-2">
+      <form className="space-y-5" noValidate onSubmit={onSubmit}>
+        <ValidationSummary errors={validationErrors} />
+
+        <FieldRow columns={2}>
           <div className="space-y-2">
-            <label htmlFor="todo-title">Task Title</label>
-            <input
+            <Label htmlFor="todo-title">Task Title</Label>
+            <Input
               id="todo-title"
+              aria-describedby={titleError ? titleErrorId : undefined}
+              aria-invalid={titleError ? "true" : undefined}
               placeholder="Add a new task"
               value={formState.title}
               onChange={(event) => onTitleChange(event.target.value)}
             />
+            {titleError ? <ErrorText id={titleErrorId}>{titleError}</ErrorText> : null}
           </div>
-          <div className="space-y-2">
-            <label htmlFor="todo-due">Due date</label>
-            <input
+          <ConditionalFieldBlock visible={isDueDateVisible} className="space-y-2">
+            <Label htmlFor="todo-due">Due date</Label>
+            <Input
               id="todo-due"
               type="date"
               value={formState.dueOn}
               onChange={(event) => onDueOnChange(event.target.value)}
             />
-          </div>
-        </div>
+          </ConditionalFieldBlock>
+        </FieldRow>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <FieldRow columns={2}>
           <div className="space-y-2">
-            <label htmlFor="todo-status">Status</label>
+            <Label htmlFor="todo-status">Status</Label>
             <select
               id="todo-status"
               value={formState.status}
@@ -84,7 +107,7 @@ export function TodoForm({
             </select>
           </div>
           <div className="space-y-2">
-            <label htmlFor="todo-priority">Priority</label>
+            <Label htmlFor="todo-priority">Priority</Label>
             <select
               id="todo-priority"
               value={formState.priority}
@@ -95,11 +118,11 @@ export function TodoForm({
               <option value="high">High</option>
             </select>
           </div>
-        </div>
+        </FieldRow>
 
         <div className="space-y-2">
-          <label htmlFor="todo-tags">Tags</label>
-          <input
+          <Label htmlFor="todo-tags">Tags</Label>
+          <Input
             id="todo-tags"
             value={tagInput}
             placeholder="Type tag and press Enter or comma"
@@ -147,27 +170,33 @@ export function TodoForm({
         <div className="space-y-2">
           <p className="text-sm text-muted">Description (rich text nhe)</p>
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
+              aria-label="Bold"
               type="button"
-              className="rounded border border-border px-3 py-1 text-xs"
+              size="sm"
+              variant="secondary"
               onClick={() => onDescriptionCommand("bold")}
             >
               B
-            </button>
-            <button
+            </Button>
+            <Button
+              aria-label="Italic"
               type="button"
-              className="rounded border border-border px-3 py-1 text-xs"
+              size="sm"
+              variant="secondary"
               onClick={() => onDescriptionCommand("italic")}
             >
               I
-            </button>
-            <button
+            </Button>
+            <Button
+              aria-label="Bulleted list"
               type="button"
-              className="rounded border border-border px-3 py-1 text-xs"
+              size="sm"
+              variant="secondary"
               onClick={() => onDescriptionCommand("insertUnorderedList")}
             >
               UL
-            </button>
+            </Button>
           </div>
           <div
             ref={descriptionEditorRef}
@@ -179,26 +208,22 @@ export function TodoForm({
           />
         </div>
 
-        {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
+        {formError ? <ErrorText>{formError}</ErrorText> : null}
 
-        <div className="flex flex-wrap gap-3">
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {editingTaskId ? (isSubmitting ? "Saving..." : "Save Task") : isSubmitting ? "Adding..." : "Add Task"}
-          </button>
-          {editingTaskId ? (
-            <button
-              className="inline-flex items-center justify-center rounded-full border border-border bg-surface px-5 py-3 text-sm text-text transition hover:bg-surfaceAlt"
-              type="button"
-              onClick={onCancelEdit}
-            >
-              Cancel Edit
-            </button>
-          ) : null}
-        </div>
+        <ActionArea
+          primary={
+            <Button type="submit" disabled={isSubmitting} pending={isSubmitting}>
+              {editingTaskId ? (isSubmitting ? "Saving..." : "Save Task") : isSubmitting ? "Adding..." : "Add Task"}
+            </Button>
+          }
+          secondary={
+            editingTaskId ? (
+              <Button type="button" variant="secondary" onClick={onCancelEdit}>
+                Cancel Edit
+              </Button>
+            ) : null
+          }
+        />
       </form>
     </Panel>
   );

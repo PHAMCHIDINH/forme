@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { reconcileDependentFieldState } from "../../shared/form-system/contracts/dependentFieldState";
+import type { ValidationSummaryError } from "../../shared/form-system/patterns";
 import { EmptyState } from "../../shared/ui/EmptyState";
 import { Panel } from "../../shared/ui/Panel";
 import { SectionHeading } from "../../shared/ui/SectionHeading";
@@ -22,6 +24,45 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
   done: "Done",
   cancelled: "Cancelled",
 };
+
+type TodoFieldErrors = {
+  title: string | null;
+};
+
+const DEFAULT_FIELD_ERRORS: TodoFieldErrors = {
+  title: null,
+};
+
+function isDueDateVisible(status: TaskStatus) {
+  return status === "todo" || status === "in_progress";
+}
+
+function reconcileTodoFormState(state: TaskFormState): TaskFormState {
+  const dueDateState = reconcileDependentFieldState({
+    visible: isDueDateVisible(state.status),
+    value: state.dueOn || null,
+    error: null,
+    touched: false,
+  });
+
+  if (dueDateState.value === (state.dueOn || null)) {
+    return state;
+  }
+
+  return {
+    ...state,
+    dueOn: dueDateState.value ?? "",
+  };
+}
+
+function buildQuickStatusUpdatePayload(status: TaskStatus): UpdateTaskInput {
+  return isDueDateVisible(status)
+    ? { status }
+    : {
+        status,
+        dueAt: null,
+      };
+}
 
 function sanitizeRichText(html: string) {
   const withoutScripts = html
@@ -58,6 +99,7 @@ export function TodoPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [formState, setFormState] = useState<TaskFormState>(DEFAULT_FORM_STATE);
+  const [fieldErrors, setFieldErrors] = useState<TodoFieldErrors>(DEFAULT_FIELD_ERRORS);
   const [formError, setFormError] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
@@ -128,6 +170,7 @@ export function TodoPage() {
 
   const clearForm = () => {
     setFormState(DEFAULT_FORM_STATE);
+    setFieldErrors(DEFAULT_FIELD_ERRORS);
     setTagInput("");
     setFormError(null);
     setEditingTaskId(null);
@@ -152,12 +195,32 @@ export function TodoPage() {
     }));
   };
 
+  const validationErrors = useMemo(() => {
+    const errors: ValidationSummaryError[] = [];
+
+    if (fieldErrors.title) {
+      errors.push({
+        fieldId: "todo-title",
+        message: fieldErrors.title,
+      });
+    }
+
+    return errors;
+  }, [fieldErrors.title]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = formState.title.trim();
 
+    if (fieldErrors.title || formError) {
+      setFieldErrors(DEFAULT_FIELD_ERRORS);
+      setFormError(null);
+    }
+
     if (!title) {
-      setFormError("Task title is required");
+      setFieldErrors({
+        title: "Task title is required",
+      });
       return;
     }
 
@@ -166,7 +229,10 @@ export function TodoPage() {
       descriptionHtml: formState.descriptionHtml ? sanitizeRichText(formState.descriptionHtml) : undefined,
       status: formState.status,
       priority: formState.priority,
-      dueAt: formState.dueOn ? dateInputToIsoInAppZone(formState.dueOn) : undefined,
+      dueAt:
+        isDueDateVisible(formState.status) && formState.dueOn
+          ? dateInputToIsoInAppZone(formState.dueOn)
+          : undefined,
       tags: formState.tags,
     };
 
@@ -191,7 +257,8 @@ export function TodoPage() {
 
   const setEditingTask = (item: TaskItem) => {
     setEditingTaskId(item.id);
-    setFormState(toFormState(item));
+    setFormState(reconcileTodoFormState(toFormState(item)));
+    setFieldErrors(DEFAULT_FIELD_ERRORS);
     setTagInput("");
     setFormError(null);
   };
@@ -219,19 +286,32 @@ export function TodoPage() {
         formState={formState}
         tagInput={tagInput}
         tagSuggestions={TAG_SUGGESTIONS}
+        validationErrors={validationErrors}
+        titleError={fieldErrors.title}
         formError={formError}
         editingTaskId={editingTaskId}
+        isDueDateVisible={isDueDateVisible(formState.status)}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
         descriptionEditorRef={descriptionEditorRef}
         onSubmit={handleSubmit}
         onTitleChange={(value) => {
           setFormState((current) => ({ ...current, title: value }));
+          if (fieldErrors.title) {
+            setFieldErrors((current) => ({ ...current, title: null }));
+          }
           if (formError) {
             setFormError(null);
           }
         }}
         onDueOnChange={(value) => setFormState((current) => ({ ...current, dueOn: value }))}
-        onStatusChange={(value) => setFormState((current) => ({ ...current, status: value }))}
+        onStatusChange={(value) =>
+          setFormState((current) =>
+            reconcileTodoFormState({
+              ...current,
+              status: value,
+            }),
+          )
+        }
         onPriorityChange={(value) => setFormState((current) => ({ ...current, priority: value }))}
         onTagInputChange={setTagInput}
         onPushTags={pushTags}
@@ -275,7 +355,7 @@ export function TodoPage() {
           items={items}
           formatDueAt={formatDueAt}
           sanitizeRichText={sanitizeRichText}
-          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: { status } })}
+          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: buildQuickStatusUpdatePayload(status) })}
           onEdit={setEditingTask}
           onToggleArchive={(todo) =>
             updateMutation.mutate({
@@ -292,7 +372,7 @@ export function TodoPage() {
           boardGroups={boardGroups}
           statusLabels={STATUS_LABELS}
           formatDueAt={formatDueAt}
-          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: { status } })}
+          onStatusChange={(id, status) => updateMutation.mutate({ id, payload: buildQuickStatusUpdatePayload(status) })}
           onEdit={setEditingTask}
           onToggleArchive={(todo) =>
             updateMutation.mutate({
