@@ -1,103 +1,109 @@
 @import "tailwindcss";
 
 :root {
-  /* Semantic source of truth for the first-slice balanced retro contract. */
-  --background: #f2ece3;
-  --foreground: #1e252c;
-  --card: #fffcf6;
-  --card-foreground: #1e252c;
-  --popover: #fffdf8;
-  --popover-foreground: #1e252c;
-  --primary: #315f63;
-  --primary-foreground: #fffdf8;
-  --secondary: #ebe1d2;
-  --secondary-foreground: #1e252c;
-  --muted: #596572;
-  --muted-foreground: #596572;
-  --accent: #315f63;
-  --accent-foreground: #fffdf8;
-  --destructive: #9d4d4d;
-  --destructive-foreground: #fffdf8;
-  --border: #c8c0b3;
-  --input: #b8aea0;
-  --ring: rgba(49, 95, 99, 0.45);
+  --radius: 0.5rem;
+  --background: #FCFFE7;
+  --foreground: #000000;
+  --muted: #EFD0D5;
+  --muted-foreground: #A42439;
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  --border: #000000;
+  --input: #FFFFFF;
+  --primary: #EA435F;
+  --primary-hover: #D00000;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFDA5C;
+  --secondary-foreground: #000000;
+  --accent: #CEEBFC;
+  --accent-foreground: #000000;
+  --destructive: #D00000;
+  --destructive-foreground: #FFFFFF;
+  --ring: #000000;
 
-  --form-state-default-border: #c8c0b3;
-  --form-state-hover-border: #6c6155;
-  --form-state-focus-ring: 0 0 0 2px rgba(242, 236, 227, 0.95), 0 0 0 4px rgba(49, 95, 99, 0.55);
-  --form-state-error-border: #9d4d4d;
-  --form-state-error-text: #9d4d4d;
-  --form-state-disabled-bg: #eee6d8;
-  --form-state-success-border: #5f815b;
-  --form-state-warning-border: #af6e33;
+  --surface-canvas: var(--background);
+  --surface-shell: #FFFEF2;
+  --surface-panel: var(--card);
+  --surface-panel-muted: #FFF3BF;
+  --surface-panel-featured: var(--accent);
 
-  /* First slice primitives. */
-  --surface-canvas: #f2ece3;
-  --surface-shell: #f9f4ea;
-  --surface-panel: #fffdf8;
-  --surface-panel-muted: #f4ecdf;
-  --surface-panel-featured: #f7efe0;
+  --radius-sm: 0.35rem;
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.125rem);
 
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --border-default: var(--border);
+  --border-strong: var(--border);
+  --border-subtle: var(--border);
 
-  --border-strong: var(--form-state-hover-border);
-  --border-default: var(--form-state-default-border);
-  --border-subtle: #ddd5c8;
+  --shadow-crisp-sm: 4px 4px 0 0 rgba(0, 0, 0, 1);
+  --shadow-crisp-md: 6px 6px 0 0 rgba(0, 0, 0, 1);
+  --shadow-crisp-lg: 8px 8px 0 0 rgba(0, 0, 0, 1);
+  --focus-ring: 0 0 0 3px var(--ring);
 
-  --shadow-crisp-sm: 0 1px 0 0 rgba(30, 37, 44, 0.22);
-  --shadow-crisp-md: 0 2px 0 0 rgba(30, 37, 44, 0.22);
-  --shadow-crisp-lg: 0 3px 0 0 rgba(30, 37, 44, 0.22);
-
-  --focus-ring: var(--form-state-focus-ring);
-
-  /* Legacy aliases kept only as migration bridges for existing utilities. */
-  --color-base: var(--background);
-  --color-surface: var(--card);
-  --color-text: var(--foreground);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-border: var(--border);
-}
-
-:root[data-ui-reduction="true"] {
-  --shadow-crisp-sm: 0 1px 0 0 rgba(30, 37, 44, 0.12);
-  --shadow-crisp-md: 0 1px 0 0 rgba(30, 37, 44, 0.14);
-  --shadow-crisp-lg: 0 2px 0 0 rgba(30, 37, 44, 0.16);
-  --surface-panel-muted: #f6f0e6;
-  --surface-panel-featured: #f5eddf;
-  --border-default: #d5cdc0;
+  --form-state-default-border: var(--border);
+  --form-state-hover-border: var(--border);
+  --form-state-focus-ring: var(--focus-ring);
+  --form-state-error-border: var(--destructive);
+  --form-state-error-text: var(--destructive);
+  --form-state-disabled-bg: #D9D9D9;
+  --form-state-success-border: #1F9D55;
+  --form-state-warning-border: #B7791F;
 }
 
 :root[data-theme="dark"] {
-  --background: #1c1714;
-  --foreground: #f7efe4;
-  --card: #241d19;
-  --card-foreground: #f7efe4;
-  --popover: #2a231e;
-  --popover-foreground: #f7efe4;
-  --secondary: #342c26;
-  --muted: #c7b8a6;
-  --border: #5a4e43;
-  --input: #685a4d;
-  --ring: rgba(145, 203, 203, 0.42);
+  --background: #0F0F0F;
+  --foreground: #F5F5F5;
+  --muted: #3A1F24;
+  --muted-foreground: #F2A7B2;
+  --card: #1A1A1A;
+  --card-foreground: #FFFFFF;
+  --popover: #1A1A1A;
+  --popover-foreground: #FFFFFF;
+  --border: #F5F5F5;
+  --input: #2A2A2A;
+  --primary: #EA435F;
+  --primary-hover: #D00000;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFDA5C;
+  --secondary-foreground: #000000;
+  --accent: #2A3B45;
+  --accent-foreground: #CEEBFC;
+  --destructive: #D00000;
+  --destructive-foreground: #FFFFFF;
+  --ring: #EA435F;
+}
 
-  --surface-canvas: #1c1714;
-  --surface-shell: #221b17;
-  --surface-panel: #2a231e;
-  --surface-panel-muted: #332a24;
-  --surface-panel-featured: #382d26;
+.dark {
+  --background: #0F0F0F;
+  --foreground: #F5F5F5;
+  --muted: #3A1F24;
+  --muted-foreground: #F2A7B2;
+  --card: #1A1A1A;
+  --card-foreground: #FFFFFF;
+  --popover: #1A1A1A;
+  --popover-foreground: #FFFFFF;
+  --border: #F5F5F5;
+  --input: #2A2A2A;
+  --primary: #EA435F;
+  --primary-hover: #D00000;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFDA5C;
+  --secondary-foreground: #000000;
+  --accent: #2A3B45;
+  --accent-foreground: #CEEBFC;
+  --destructive: #D00000;
+  --destructive-foreground: #FFFFFF;
+  --ring: #EA435F;
+}
 
-  --border-default: #5a4e43;
-  --border-strong: #8f7d6d;
-  --border-subtle: #4a4037;
-  --focus-ring: 0 0 0 2px rgba(28, 23, 20, 0.96), 0 0 0 4px rgba(145, 203, 203, 0.45);
-  --form-state-error-border: #f08c8c;
-  --form-state-error-text: #f6a0a0;
-  --form-state-disabled-bg: #39322d;
-  --form-state-success-border: #83b47d;
-  --form-state-warning-border: #d69a5e;
+:root[data-ui-reduction="true"] {
+  --shadow-crisp-sm: 2px 2px 0 0 rgba(0, 0, 0, 1);
+  --shadow-crisp-md: 4px 4px 0 0 rgba(0, 0, 0, 1);
+  --shadow-crisp-lg: 6px 6px 0 0 rgba(0, 0, 0, 1);
+  --surface-panel-muted: #FFF0A8;
+  --surface-panel-featured: #DDF3FF;
 }
 
 @theme {
@@ -129,7 +135,6 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Legacy utility aliases used by the current app shell. */
   --color-base: var(--background);
   --color-surface: var(--card);
   --color-surfaceAlt: var(--secondary);
@@ -147,15 +152,12 @@
 
   body {
     margin: 0;
-    background-color: var(--surface-canvas);
+    background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-image:
-      radial-gradient(circle at top left, rgba(49, 95, 99, 0.06), transparent 34%),
-      radial-gradient(circle at 85% -12%, rgba(124, 102, 72, 0.08), transparent 44%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(252, 247, 239, 0.9));
+    background-image: none;
   }
 
   a {
@@ -165,55 +167,65 @@
 
   button,
   input,
-  select {
+  select,
+  textarea {
     font: inherit;
   }
 
   input,
-  select {
+  select,
+  textarea {
     width: 100%;
-    border: 1px solid var(--border-default);
+    border: 2px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--surface-panel);
+    background: var(--input);
     color: var(--foreground);
     padding: 0.625rem 0.875rem;
     outline: none;
+    box-shadow: var(--shadow-crisp-sm);
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
-  input::placeholder {
-    color: rgba(89, 101, 114, 0.92);
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted-foreground);
   }
 
   input:hover,
-  select:hover {
-    border-color: var(--border-strong);
+  select:hover,
+  textarea:hover {
+    border-color: var(--border);
   }
 
   input:focus-visible,
-  select:focus-visible {
+  select:focus-visible,
+  textarea:focus-visible {
     border-color: var(--primary);
     box-shadow: var(--focus-ring);
   }
 
   input:disabled,
-  select:disabled {
+  select:disabled,
+  textarea:disabled {
     background: var(--form-state-disabled-bg);
     cursor: not-allowed;
   }
 
   input[data-state="error"],
-  select[data-state="error"] {
+  select[data-state="error"],
+  textarea[data-state="error"] {
     border-color: var(--form-state-error-border);
   }
 
   input[data-state="success"],
-  select[data-state="success"] {
+  select[data-state="success"],
+  textarea[data-state="success"] {
     border-color: var(--form-state-success-border);
   }
 
   input[data-state="warning"],
-  select[data-state="warning"] {
+  select[data-state="warning"],
+  textarea[data-state="warning"] {
     border-color: var(--form-state-warning-border);
   }
 
