@@ -188,10 +188,30 @@ describe("form system primitives", () => {
     expect(screen.getByRole("checkbox", { name: "Subscribe" })).toBeChecked();
   });
 
+  test("keeps disabled Checkbox styling hooks", () => {
+    render(<Checkbox aria-label="Subscribe" disabled />);
+
+    const checkbox = screen.getByRole("checkbox", { name: "Subscribe" });
+
+    expect(checkbox).toBeDisabled();
+    expect(checkbox).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(checkbox).toHaveClass("disabled:shadow-none");
+  });
+
   test("renders Radio with radio semantics", () => {
     render(<Radio aria-label="Primary option" name="priority" defaultChecked />);
 
     expect(screen.getByRole("radio", { name: "Primary option" })).toBeChecked();
+  });
+
+  test("keeps disabled Radio styling hooks", () => {
+    render(<Radio aria-label="Primary option" disabled name="priority" />);
+
+    const radio = screen.getByRole("radio", { name: "Primary option" });
+
+    expect(radio).toBeDisabled();
+    expect(radio).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+    expect(radio).toHaveClass("disabled:shadow-none");
   });
 
   test("renders Switch with switch semantics and change callback", async () => {
@@ -204,6 +224,23 @@ describe("form system primitives", () => {
 
     expect(screen.getByRole("switch", { name: "Notifications" })).toHaveAttribute("aria-checked", "false");
     expect(onCheckedChange).toHaveBeenCalledWith(true);
+  });
+
+  test("does not call Switch change handler while disabled", async () => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+
+    render(<Switch aria-label="Notifications" checked={false} disabled onCheckedChange={onCheckedChange} />);
+
+    const control = screen.getByRole("switch", { name: "Notifications" });
+
+    expect(control).toBeDisabled();
+    expect(control).toHaveClass("disabled:bg-[var(--form-state-disabled-bg)]");
+
+    await user.click(control);
+
+    expect(onCheckedChange).not.toHaveBeenCalled();
+    expect(control).toHaveAttribute("aria-checked", "false");
   });
 
   test("renders primitive Button with shared button behavior", () => {
