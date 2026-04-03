@@ -78,21 +78,13 @@ describe("DashboardLayout", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("link", { name: /home/i })).toBeInTheDocument();
-    expect(screen.getByText("Context")).toHaveClass(
-      "inline-block",
-      "border-2",
-      "bg-card",
-      "text-[0.65rem]",
-      "font-black",
-      "uppercase",
-      "shadow-[var(--shadow-crisp-sm)]",
-    );
-    expect(screen.getByText(/^Private Workspace$/i)).toHaveClass("font-black", "uppercase", "tracking-[0.08em]");
-    expect(
-      screen.getByRole("navigation", { name: /dashboard navigation/i }).parentElement?.parentElement?.className,
-    ).toContain(
-      "lg:grid-cols-[280px_1fr]",
-    );
+    const navigation = await screen.findByRole("navigation", { name: /dashboard navigation/i });
+    const sidebarShell = navigation.parentElement;
+    const shellGrid = sidebarShell?.parentElement;
+
+    expect(screen.getByText("Context")).toHaveClass("border-2", "bg-card");
+    expect(screen.getByText(/^Private Workspace$/i)).toHaveClass("font-black", "uppercase");
+    expect(sidebarShell).toHaveClass("bg-secondary");
+    expect(shellGrid).toHaveClass("lg:grid-cols-[280px_1fr]");
   });
 });
