@@ -15,6 +15,7 @@ type Config struct {
 	JWTSecret          string
 	OwnerUsername      string
 	OwnerPasswordHash  string
+	PublicAPIBaseURL   string
 	CORSAllowedOrigins []string
 	CookieSecure       bool
 	CookieSameSite     string
@@ -45,6 +46,7 @@ func Load() Config {
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		OwnerUsername:      os.Getenv("OWNER_USERNAME"),
 		OwnerPasswordHash:  os.Getenv("OWNER_PASSWORD_HASH"),
+		PublicAPIBaseURL:   publicAPIBaseURL(port),
 		CORSAllowedOrigins: parseCSVEnv("CORS_ALLOWED_ORIGINS"),
 		CookieSecure:       parseBool(os.Getenv("COOKIE_SECURE")),
 		CookieSameSite:     cookieSameSite,
@@ -92,4 +94,13 @@ func parseBool(value string) bool {
 	default:
 		return false
 	}
+}
+
+func publicAPIBaseURL(port string) string {
+	value := strings.TrimRight(strings.TrimSpace(os.Getenv("PUBLIC_API_BASE_URL")), "/")
+	if value != "" {
+		return value
+	}
+
+	return "http://localhost:" + port
 }

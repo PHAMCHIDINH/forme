@@ -22,6 +22,23 @@ function renderLoginRoute() {
 }
 
 describe("LoginPage", () => {
+  it("renders the login shell as two framed panels", () => {
+    renderLoginRoute();
+
+    expect(screen.getByTestId("login-shell-grid")).toHaveClass("grid", "gap-6", "lg:grid-cols-[1fr_0.92fr]");
+    expect(screen.getByTestId("login-info-panel")).toHaveClass(
+      "border-2",
+      "bg-secondary",
+      "shadow-[var(--shadow-crisp-lg)]",
+    );
+    expect(screen.getByTestId("login-form-panel")).toHaveClass(
+      "border-2",
+      "bg-card",
+      "shadow-[var(--shadow-crisp-lg)]",
+    );
+    expect(screen.getByRole("heading", { name: /enter workspace/i })).toHaveClass("uppercase");
+  });
+
   it("shows validation messages before submission", async () => {
     const user = userEvent.setup();
 

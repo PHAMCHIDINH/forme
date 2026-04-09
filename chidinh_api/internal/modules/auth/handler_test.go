@@ -175,7 +175,7 @@ func newAuthTestRouter() http.Handler {
 	todoHandler := todo.NewHandler(todo.NewService(&todo.Repository{}), validation.New())
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 
-	return httpserver.NewRouter(cfg, logger, authHandler, todoHandler, authMiddleware)
+	return httpserver.NewRouter(cfg, logger, authHandler, todoHandler, nil, authMiddleware)
 }
 
 type stubOwnerStore struct {

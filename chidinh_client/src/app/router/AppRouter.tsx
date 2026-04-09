@@ -4,6 +4,7 @@ import { LoginPage } from "../../modules/auth/LoginPage";
 import { RequireAuth } from "../../modules/auth/RequireAuth";
 import { DashboardHomePage } from "../../modules/dashboard/DashboardHomePage";
 import { DashboardLayout } from "../../modules/dashboard/DashboardLayout";
+import { JournalPage } from "../../modules/journal/JournalPage";
 import { PortfolioPage } from "../../modules/portfolio/PortfolioPage";
 import { TodoPage } from "../../modules/todo/TodoPage";
 import { APP_ROUTES } from "./routes";
@@ -27,6 +28,7 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route path={APP_ROUTES.appRoot} element={<DashboardLayout />}>
           <Route index element={<DashboardHomePage />} />
+          <Route path="journal" element={<JournalPage />} />
           <Route path="todo" element={<TodoPage />} />
         </Route>
       </Route>

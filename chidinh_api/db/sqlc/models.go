@@ -33,3 +33,16 @@ type Todo struct {
 	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
 	ArchivedAt      pgtype.Timestamptz `json:"archived_at"`
 }
+
+type JournalEntry struct {
+	ID         uuid.UUID          `json:"id"`
+	OwnerID    string             `json:"owner_id"`
+	Type       string             `json:"type"`
+	Title      string             `json:"title"`
+	ImageURL   pgtype.Text        `json:"image_url"`
+	SourceURL  pgtype.Text        `json:"source_url"`
+	Review     pgtype.Text        `json:"review"`
+	ConsumedOn pgtype.Date        `json:"consumed_on"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}

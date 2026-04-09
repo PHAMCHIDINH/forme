@@ -48,9 +48,13 @@ describe("LoginPage form-system pilot", () => {
     renderLoginRoute();
 
     const shell = screen.getByTestId("login-shell-grid");
+    const infoPanel = screen.getByTestId("login-info-panel");
+    const formPanel = screen.getByTestId("login-form-panel");
 
     expect(shell).toHaveClass("grid");
     expect(shell).toHaveClass("gap-6");
-    expect(shell).toHaveClass("lg:grid-cols-[1fr_0.9fr]");
+    expect(shell).toHaveClass("lg:grid-cols-[1fr_0.92fr]");
+    expect(infoPanel).toHaveClass("border-2", "bg-secondary");
+    expect(formPanel).toHaveClass("border-2", "bg-card");
   });
 });

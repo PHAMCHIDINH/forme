@@ -54,6 +54,7 @@ Recommended local values:
 - `JWT_SECRET=change-me`
 - `OWNER_USERNAME=owner`
 - `OWNER_PASSWORD_HASH=<bcrypt hash>`
+- `PUBLIC_API_BASE_URL=http://localhost:8080`
 - `CORS_ALLOWED_ORIGINS=http://localhost:5173`
 - `COOKIE_SECURE=false`
 - `COOKIE_SAME_SITE=Lax`
@@ -149,6 +150,33 @@ curl -fsS -b "$COOKIE_JAR" \
   -X DELETE \
   "$API/api/v1/todos/$ITEM_ID"
 
+IMAGE_URL="$(
+  curl -fsS -b "$COOKIE_JAR" \
+    -F "file=@<absolute-path-to-local-image>" \
+    "$API/api/v1/uploads/images" \
+    | node -e 'let input=""; process.stdin.on("data", (chunk) => input += chunk).on("end", () => { const body = JSON.parse(input); console.log(body.data.imageUrl); });'
+)"
+
+JOURNAL_ID="$(
+  curl -fsS -b "$COOKIE_JAR" \
+    -H "Content-Type: application/json" \
+    -d "{\"type\":\"book\",\"title\":\"local smoke journal\",\"imageUrl\":\"$IMAGE_URL\",\"sourceUrl\":\"https://example.com/book\",\"review\":\"local smoke review\",\"consumedOn\":\"2026-04-09\"}" \
+    "$API/api/v1/journal" \
+    | node -e 'let input=""; process.stdin.on("data", (chunk) => input += chunk).on("end", () => { const body = JSON.parse(input); console.log(body.data.item.id); });'
+)"
+
+curl -fsS -b "$COOKIE_JAR" "$API/api/v1/journal"
+
+curl -fsS -b "$COOKIE_JAR" \
+  -H "Content-Type: application/json" \
+  -X PATCH \
+  -d '{"review":"updated local smoke review"}' \
+  "$API/api/v1/journal/$JOURNAL_ID"
+
+curl -fsS -b "$COOKIE_JAR" \
+  -X DELETE \
+  "$API/api/v1/journal/$JOURNAL_ID"
+
 curl -fsS -b "$COOKIE_JAR" -c "$COOKIE_JAR" -X POST "$API/api/v1/auth/logout"
 
 curl -i -b "$COOKIE_JAR" "$API/api/v1/auth/me"
@@ -164,6 +192,11 @@ Expected results:
 - todo list returns the new item
 - todo toggle returns `200` with the updated item
 - todo delete returns `200`
+- image upload returns `201` with an `imageUrl`
+- journal create returns `201`
+- journal list returns the new entry
+- journal update returns `200`
+- journal delete returns `200`
 - logout returns `200`
 - post-logout `/api/v1/auth/me` and `/api/v1/todos` return `401`
 

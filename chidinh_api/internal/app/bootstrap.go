@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	dbqueries "github.com/PHAMCHIDINH/forme/chidinh_api/db/sqlc"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/auth"
+	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/journal"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/todo"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/database"
@@ -50,9 +52,17 @@ func Run(cfg config.Config, logger *slog.Logger) error {
 	todoService := todo.NewService(todoRepository)
 	todoHandler := todo.NewHandler(todoService, requestValidator)
 
+	journalRepository := journal.NewRepository(queries)
+	journalService := journal.NewService(journalRepository)
+	journalHandler := journal.NewHandler(journalService, requestValidator, cfg.PublicAPIBaseURL)
+
+	if err := os.MkdirAll(journal.UploadImagesDir, 0o755); err != nil {
+		return fmt.Errorf("upload directory initialization failed: %w", err)
+	}
+
 	server := &http.Server{
 		Addr:    addr,
-		Handler: httpserver.NewRouter(cfg, logger, authHandler, todoHandler, authMiddleware),
+		Handler: httpserver.NewRouter(cfg, logger, authHandler, todoHandler, journalHandler, authMiddleware),
 	}
 
 	logger.Info("starting api server", slog.String("addr", addr))

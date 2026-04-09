@@ -3,16 +3,18 @@ package httpserver
 import (
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/auth"
+	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/journal"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/modules/todo"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/config"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/middleware"
 )
 
-func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler, todoHandler *todo.Handler, authMiddleware *middleware.Auth) http.Handler {
+func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler, todoHandler *todo.Handler, journalHandler *journal.Handler, authMiddleware *middleware.Auth) http.Handler {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestLogger(logger))
 	router.Use(middleware.CORS(cfg.CORSAllowedOrigins))
@@ -35,6 +37,21 @@ func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler
 		r.Patch("/{todoID}", todoHandler.Update)
 		r.Delete("/{todoID}", todoHandler.Delete)
 	})
+
+	router.Route("/api/v1/journal", func(r chi.Router) {
+		r.Use(authMiddleware.Require)
+		r.Get("/", journalHandler.List)
+		r.Post("/", journalHandler.Create)
+		r.Patch("/{entryID}", journalHandler.Update)
+		r.Delete("/{entryID}", journalHandler.Delete)
+	})
+
+	router.Route("/api/v1/uploads", func(r chi.Router) {
+		r.Use(authMiddleware.Require)
+		r.Post("/images", journalHandler.UploadImage)
+	})
+
+	router.With(authMiddleware.Require).Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(filepath.Dir(journal.UploadImagesDir)))))
 
 	return router
 }

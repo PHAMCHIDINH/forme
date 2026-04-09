@@ -18,7 +18,7 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-base px-4 py-4 lg:px-6 lg:py-6">
-      <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[250px_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[280px_1fr]">
         <SidebarNav
           ariaLabel="Dashboard Navigation"
           items={SHELL_NAV_ITEMS}
@@ -28,10 +28,12 @@ export function DashboardLayout() {
         />
 
         <div className="space-y-4">
-          <Panel className="flex flex-wrap items-center justify-between gap-3 p-5 lg:p-6" variant="shell">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-accent">Context</p>
-              <p className="mt-1 text-base font-semibold text-foreground lg:text-lg">Private Workspace</p>
+          <Panel className="flex flex-wrap items-center justify-between gap-3 p-5 shadow-[var(--shadow-crisp-md)] lg:p-6" variant="featured">
+            <div className="space-y-2">
+              <p className="inline-block border-2 border-border bg-card px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-foreground shadow-[var(--shadow-crisp-sm)]">
+                Context
+              </p>
+              <p className="text-base font-black uppercase tracking-[0.08em] text-foreground lg:text-lg">Private Workspace</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Summary-first dashboard framing for active modules and planned surfaces.
               </p>
@@ -47,7 +49,7 @@ export function DashboardLayout() {
             </div>
           </Panel>
 
-          <Panel className="p-5 lg:p-7" variant="default">
+          <Panel className="p-5 shadow-[var(--shadow-crisp-md)] lg:p-7" variant="default">
             <Outlet />
           </Panel>
         </div>

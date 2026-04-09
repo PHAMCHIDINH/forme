@@ -12,6 +12,7 @@ func TestLoadUsesRepoFriendlyDefaults(t *testing.T) {
 	t.Setenv("JWT_SECRET", "secret")
 	t.Setenv("OWNER_USERNAME", "owner")
 	t.Setenv("OWNER_PASSWORD_HASH", "$2b$12$Ql1OEDm9gTzCvIPdp2AvJ.8zYe6c7kwEZKtbG8ybULk8OyLT5DCWC")
+	t.Setenv("PUBLIC_API_BASE_URL", "")
 	t.Setenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173, http://localhost:4173")
 	t.Setenv("COOKIE_SECURE", "")
 	t.Setenv("COOKIE_SAME_SITE", "")
@@ -35,6 +36,9 @@ func TestLoadUsesRepoFriendlyDefaults(t *testing.T) {
 	}
 	if cfg.OwnerPasswordHash == "" {
 		t.Fatal("expected owner password hash to be loaded")
+	}
+	if cfg.PublicAPIBaseURL != "http://localhost:8080" {
+		t.Fatalf("expected default public api base url %q, got %q", "http://localhost:8080", cfg.PublicAPIBaseURL)
 	}
 	if len(cfg.CORSAllowedOrigins) != 2 {
 		t.Fatalf("expected 2 CORS origins, got %d", len(cfg.CORSAllowedOrigins))
@@ -124,5 +128,16 @@ func TestLoadTrimsCORSOrigins(t *testing.T) {
 
 	if got := strings.Join(cfg.CORSAllowedOrigins, ","); got != "http://localhost:5173,http://localhost:4173" {
 		t.Fatalf("expected trimmed origins, got %q", got)
+	}
+}
+
+func TestLoadTrimsPublicAPIBaseURL(t *testing.T) {
+	t.Setenv("PORT", "8081")
+	t.Setenv("PUBLIC_API_BASE_URL", " https://api.example.com/ ")
+
+	cfg := Load()
+
+	if cfg.PublicAPIBaseURL != "https://api.example.com" {
+		t.Fatalf("expected trimmed public api base url, got %q", cfg.PublicAPIBaseURL)
 	}
 }

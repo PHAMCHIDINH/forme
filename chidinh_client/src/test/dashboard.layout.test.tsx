@@ -62,7 +62,29 @@ describe("DashboardLayout", () => {
     await screen.findByRole("heading", { name: /workspace overview/i });
 
     for (const label of screen.getAllByText(/planned module/i)) {
-      expect(label.closest("div")).toHaveClass("bg-surfaceAlt");
+      expect(label.closest("div")).toHaveClass("bg-secondary");
     }
+  });
+
+  it("renders dashboard layout controls with framed shell surfaces", async () => {
+    mockFetchSequence(jsonResponse({ user: { id: "user-1", username: "ada", displayName: "Ada Lovelace" } }));
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/app"]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const navigation = await screen.findByRole("navigation", { name: /dashboard navigation/i });
+    const sidebarShell = navigation.parentElement;
+    const shellGrid = sidebarShell?.parentElement;
+
+    expect(screen.getByText("Context")).toHaveClass("border-2", "bg-card");
+    expect(screen.getByText(/^Private Workspace$/i)).toHaveClass("font-black", "uppercase");
+    expect(sidebarShell).toHaveClass("bg-secondary");
+    expect(shellGrid).toHaveClass("lg:grid-cols-[280px_1fr]");
   });
 });
