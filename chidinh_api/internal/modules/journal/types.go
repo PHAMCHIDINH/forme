@@ -215,6 +215,17 @@ func (r CreateRequest) ToParams() CreateParams {
 	}
 }
 
+func (r UpdateRequest) ToParams() UpdateParams {
+	return UpdateParams{
+		Type:       r.Type,
+		Title:      r.Title,
+		ImageURL:   r.ImageURL,
+		SourceURL:  r.SourceURL,
+		Review:     r.Review,
+		ConsumedOn: r.ConsumedOn,
+	}
+}
+
 func (p *CreateParams) Normalize() {
 	p.Type = EntryType(strings.ToLower(strings.TrimSpace(string(p.Type))))
 	p.Title = strings.TrimSpace(p.Title)
