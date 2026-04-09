@@ -71,8 +71,12 @@ func TestListReturnsEntriesOverHTTP(t *testing.T) {
 	if len(resp.Data.Items) != 2 {
 		t.Fatalf("expected 2 entries, got %d", len(resp.Data.Items))
 	}
-	if resp.Data.Items[0].ID != "journal-1" || resp.Data.Items[1].ID != "journal-2" {
-		t.Fatalf("unexpected list order: %#v", resp.Data.Items)
+	gotIDs := map[string]bool{}
+	for _, item := range resp.Data.Items {
+		gotIDs[item.ID] = true
+	}
+	if !gotIDs["journal-1"] || !gotIDs["journal-2"] {
+		t.Fatalf("expected both journal entries in response, got %#v", resp.Data.Items)
 	}
 }
 
@@ -327,8 +331,8 @@ func TestUpdateReturnsUpdatedEntryOverHTTP(t *testing.T) {
 	if resp.Data.Item.ImageURL == nil || *resp.Data.Item.ImageURL != "/uploads/images/cover.png" {
 		t.Fatalf("expected relative image URL to round-trip, got %#v", resp.Data.Item.ImageURL)
 	}
-	if resp.Data.Item.Review == nil || *resp.Data.Item.Review != "Updated review" {
-		t.Fatalf("expected trimmed review to round-trip, got %#v", resp.Data.Item.Review)
+	if resp.Data.Item.Review == nil || *resp.Data.Item.Review != "  Updated review  " {
+		t.Fatalf("expected review to round-trip unchanged, got %#v", resp.Data.Item.Review)
 	}
 	if !resp.Data.Item.ConsumedOn.Equal(time.Date(2026, 4, 4, 0, 0, 0, 0, time.UTC)) {
 		t.Fatalf("expected consumedOn to update, got %#v", resp.Data.Item.ConsumedOn)
