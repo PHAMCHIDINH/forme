@@ -54,7 +54,7 @@ func Run(cfg config.Config, logger *slog.Logger) error {
 
 	journalRepository := journal.NewRepository(queries)
 	journalService := journal.NewService(journalRepository)
-	journalHandler := journal.NewHandler(journalService, requestValidator)
+	journalHandler := journal.NewHandler(journalService, requestValidator, cfg.PublicAPIBaseURL)
 
 	if err := os.MkdirAll(journal.UploadImagesDir, 0o755); err != nil {
 		return fmt.Errorf("upload directory initialization failed: %w", err)

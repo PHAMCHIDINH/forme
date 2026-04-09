@@ -14,6 +14,7 @@ describe("desktop shell primitives", () => {
           ariaLabel="Dashboard Navigation"
           items={[
             { label: "Home", to: "/app", end: true },
+            { label: "Journal", to: "/app/journal" },
             { label: "Todo", to: "/app/todo" },
             { label: "Public Hub", to: "/" },
           ]}
@@ -48,6 +49,7 @@ describe("desktop shell primitives", () => {
           ariaLabel="Workspace launcher"
           items={[
             { label: "Home", to: "/app", end: true },
+            { label: "Journal", to: "/app/journal" },
             { label: "Todo", to: "/app/todo" },
             { label: "Public Hub", to: "/" },
           ]}
@@ -56,6 +58,7 @@ describe("desktop shell primitives", () => {
     );
 
     expect(screen.getByRole("navigation", { name: /workspace launcher/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /journal/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /todo/i })).toHaveAttribute("aria-current", "page");
   });
 
@@ -86,6 +89,7 @@ describe("desktop shell primitives", () => {
     const activeRoute = screen.getByRole("link", { name: /todo/i });
 
     expect(screen.getByText("Private Hub")).toHaveClass("border-2", "bg-card");
+    expect(screen.getByRole("link", { name: /journal/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /public hub/i })).toBeInTheDocument();
     expect(shellPanel).toHaveClass("bg-secondary");
     expect(activeRoute).toHaveAttribute("aria-current", "page");

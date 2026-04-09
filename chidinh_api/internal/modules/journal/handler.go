@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -20,12 +21,14 @@ const UploadImagesDir = "./uploads/images"
 type Handler struct {
 	service   *Service
 	validator *validation.Validator
+	publicAPIBaseURL string
 }
 
-func NewHandler(service *Service, validator *validation.Validator) *Handler {
+func NewHandler(service *Service, validator *validation.Validator, publicAPIBaseURL string) *Handler {
 	return &Handler{
-		service:   service,
-		validator: validator,
+		service:          service,
+		validator:        validator,
+		publicAPIBaseURL: strings.TrimRight(strings.TrimSpace(publicAPIBaseURL), "/"),
 	}
 }
 
@@ -173,10 +176,7 @@ func (h *Handler) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageURL := "/uploads/images/" + filepath.Base(savedFile.Name())
-	if absoluteURL := requestBaseURL(r); absoluteURL != "" {
-		imageURL = absoluteURL + imageURL
-	}
+	imageURL := h.uploadedImageURL(filepath.Base(savedFile.Name()))
 	apiresponse.WriteJSON(w, http.StatusCreated, map[string]any{
 		"imageUrl": imageURL,
 	})
@@ -304,18 +304,11 @@ func uploadImageExtension(contentType string) (string, bool) {
 	}
 }
 
-func requestBaseURL(r *http.Request) string {
-	scheme := "http"
-	if forwarded := r.Header.Get("X-Forwarded-Proto"); forwarded != "" {
-		scheme = forwarded
-	} else if r.TLS != nil {
-		scheme = "https"
+func (h *Handler) uploadedImageURL(fileName string) string {
+	path := "/uploads/images/" + fileName
+	if h.publicAPIBaseURL == "" {
+		return path
 	}
 
-	host := r.Host
-	if host == "" {
-		return ""
-	}
-
-	return scheme + "://" + host
+	return h.publicAPIBaseURL + path
 }

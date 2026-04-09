@@ -3,4 +3,5 @@ export const APP_ROUTES = {
   login: "/login",
   appRoot: "/app",
   todo: "/app/todo",
+  journal: "/app/journal",
 } as const;

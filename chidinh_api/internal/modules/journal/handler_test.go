@@ -614,8 +614,10 @@ func TestUploadImageStoresFileAndReturnsURLOverHTTP(t *testing.T) {
 	imageBytes := mustDecodeBase64(t, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+Xn4QAAAAASUVORK5CYII=")
 
 	req := newMultipartRequest(t, http.MethodPost, "/api/v1/uploads/images", imageBytes, "cover.png")
+	req.Host = "evil.example"
+	req.Header.Set("X-Forwarded-Proto", "https")
 	rec := httptest.NewRecorder()
-	expectedBaseURL := requestBaseURL(req)
+	expectedBaseURL := "http://localhost:8080"
 
 	router.ServeHTTP(rec, req)
 
@@ -650,7 +652,10 @@ func TestUploadImageStoresFileAndReturnsURLOverHTTP(t *testing.T) {
 }
 
 func newJournalTestRouter(store journal.JournalStore) http.Handler {
-	cfg := config.Config{JWTSecret: "test-secret"}
+	cfg := config.Config{
+		JWTSecret:        "test-secret",
+		PublicAPIBaseURL: "http://localhost:8080",
+	}
 	owner := db.Owner{
 		ID:           "owner-123",
 		Username:     "owner",
@@ -670,7 +675,7 @@ func newJournalTestRouter(store journal.JournalStore) http.Handler {
 	authMiddleware := middleware.NewAuth(authService)
 	authHandler := auth.NewHandler(cfg, authService, validation.New())
 	var todoHandler *todo.Handler
-	journalHandler := journal.NewHandler(journal.NewService(store), validation.New())
+	journalHandler := journal.NewHandler(journal.NewService(store), validation.New(), cfg.PublicAPIBaseURL)
 
 	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, journalHandler, authMiddleware)
 }
@@ -727,18 +732,6 @@ func mustDecodeBase64(t *testing.T, value string) []byte {
 	}
 
 	return decoded
-}
-
-func requestBaseURL(req *http.Request) string {
-	scheme := "http"
-	if req.TLS != nil {
-		scheme = "https"
-	}
-	if forwarded := req.Header.Get("X-Forwarded-Proto"); forwarded != "" {
-		scheme = forwarded
-	}
-
-	return scheme + "://" + req.Host
 }
 
 func authCookie(t *testing.T) *http.Cookie {

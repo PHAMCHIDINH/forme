@@ -48,6 +48,7 @@ Private area:
 
 - login page
 - authenticated dashboard shell
+- journal module
 - todo module
 - placeholder routes for future modules
 
@@ -76,6 +77,7 @@ chidinh_client/
       auth/
       portfolio/
       dashboard/
+      journal/
       todo/
     shared/
       api/
@@ -107,6 +109,11 @@ chidinh_client/
 - dashboard layout
 - sidebar and topbar
 
+`modules/journal/`
+- watch/read diary screen
+- create and edit form
+- image upload and card list
+
 `modules/todo/`
 - todo list screen
 - create form
@@ -124,6 +131,7 @@ Backend MVP 1 is a single Go service. It includes all current business modules:
 
 - auth
 - session
+- journal
 - todo
 - health/config bootstrap
 
@@ -161,6 +169,11 @@ chidinh_api/
         handler.go
         service.go
         types.go
+      journal/
+        handler.go
+        service.go
+        repository.go
+        types.go
       todo/
         handler.go
         service.go
@@ -194,6 +207,11 @@ chidinh_api/
 - logout
 - session inspection
 - JWT issuance and verification
+
+`modules/journal`
+- CRUD operations for book/video diary entries
+- owner-only image upload handling
+- owner-only data access
 
 `modules/todo`
 - CRUD operations
