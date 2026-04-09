@@ -51,7 +51,7 @@ func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler
 		r.Post("/images", journalHandler.UploadImage)
 	})
 
-	router.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(filepath.Dir(journal.UploadImagesDir)))))
+	router.With(authMiddleware.Require).Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(filepath.Dir(journal.UploadImagesDir)))))
 
 	return router
 }

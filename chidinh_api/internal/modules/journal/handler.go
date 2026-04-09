@@ -119,6 +119,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UploadImage(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "invalid multipart payload")
 		return
@@ -173,6 +174,9 @@ func (h *Handler) UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageURL := "/uploads/images/" + filepath.Base(savedFile.Name())
+	if absoluteURL := requestBaseURL(r); absoluteURL != "" {
+		imageURL = absoluteURL + imageURL
+	}
 	apiresponse.WriteJSON(w, http.StatusCreated, map[string]any{
 		"imageUrl": imageURL,
 	})
@@ -298,4 +302,20 @@ func uploadImageExtension(contentType string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func requestBaseURL(r *http.Request) string {
+	scheme := "http"
+	if forwarded := r.Header.Get("X-Forwarded-Proto"); forwarded != "" {
+		scheme = forwarded
+	} else if r.TLS != nil {
+		scheme = "https"
+	}
+
+	host := r.Host
+	if host == "" {
+		return ""
+	}
+
+	return scheme + "://" + host
 }

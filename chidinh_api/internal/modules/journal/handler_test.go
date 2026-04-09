@@ -615,6 +615,7 @@ func TestUploadImageStoresFileAndReturnsURLOverHTTP(t *testing.T) {
 
 	req := newMultipartRequest(t, http.MethodPost, "/api/v1/uploads/images", imageBytes, "cover.png")
 	rec := httptest.NewRecorder()
+	expectedBaseURL := requestBaseURL(req)
 
 	router.ServeHTTP(rec, req)
 
@@ -634,11 +635,11 @@ func TestUploadImageStoresFileAndReturnsURLOverHTTP(t *testing.T) {
 	if resp.Error != nil {
 		t.Fatalf("expected upload success, got error: %+v", *resp.Error)
 	}
-	if !strings.HasPrefix(resp.Data.ImageURL, "/uploads/images/") {
-		t.Fatalf("expected upload URL under /uploads/images/, got %q", resp.Data.ImageURL)
+	if !strings.HasPrefix(resp.Data.ImageURL, expectedBaseURL+"/uploads/images/") {
+		t.Fatalf("expected upload URL under %q, got %q", expectedBaseURL+"/uploads/images/", resp.Data.ImageURL)
 	}
 
-	savedPath := filepath.Join(strings.TrimPrefix(resp.Data.ImageURL, "/"))
+	savedPath := filepath.Join("uploads", "images", filepath.Base(resp.Data.ImageURL))
 	storedBytes, err := os.ReadFile(savedPath)
 	if err != nil {
 		t.Fatalf("expected uploaded file to be stored, got error: %v", err)
@@ -726,6 +727,18 @@ func mustDecodeBase64(t *testing.T, value string) []byte {
 	}
 
 	return decoded
+}
+
+func requestBaseURL(req *http.Request) string {
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	}
+	if forwarded := req.Header.Get("X-Forwarded-Proto"); forwarded != "" {
+		scheme = forwarded
+	}
+
+	return scheme + "://" + req.Host
 }
 
 func authCookie(t *testing.T) *http.Cookie {
