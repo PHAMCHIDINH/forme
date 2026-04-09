@@ -94,7 +94,7 @@ func TestServiceCreateRejectsInvalidFields(t *testing.T) {
 		t.Fatalf("expected invalid title error, got %v", err)
 	}
 
-	relativeSource := "/uploads/images/book.png"
+	relativeSource := "/foo"
 	_, err = svc.Create(context.Background(), "owner-123", CreateParams{
 		Type:       EntryTypeBook,
 		Title:      "Launch notes",
@@ -137,6 +137,21 @@ func TestServiceCreateAllowsRelativeImageUploadPath(t *testing.T) {
 	}
 	if got.ImageURL == nil || *got.ImageURL != relativeImage {
 		t.Fatalf("expected relative image path to round-trip, got %#v", got.ImageURL)
+	}
+}
+
+func TestServiceCreateRejectsNonUploadRelativeImagePath(t *testing.T) {
+	svc := NewService(&captureJournalStore{})
+	relativeImage := "/foo"
+
+	_, err := svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      "Launch notes",
+		ImageURL:   &relativeImage,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if !errors.Is(err, ErrInvalidImageURL) {
+		t.Fatalf("expected non-upload relative image path to fail, got %v", err)
 	}
 }
 

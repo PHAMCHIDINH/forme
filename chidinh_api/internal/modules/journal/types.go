@@ -148,7 +148,7 @@ type Entry struct {
 type CreateParams struct {
 	Type       EntryType  `json:"type" validate:"required,oneof=book video"`
 	Title      string     `json:"title" validate:"required,notblank,max=200"`
-	ImageURL   *string    `json:"imageUrl,omitempty" validate:"omitempty,url"`
+	ImageURL   *string    `json:"imageUrl,omitempty" validate:"omitempty"`
 	SourceURL  *string    `json:"sourceUrl,omitempty" validate:"omitempty,url"`
 	Review     *string    `json:"review,omitempty"`
 	ConsumedOn DateOnly   `json:"consumedOn" validate:"required"`
@@ -166,7 +166,7 @@ type UpdateParams struct {
 type CreateRequest struct {
 	Type       EntryType  `json:"type" validate:"required,oneof=book video"`
 	Title      string     `json:"title" validate:"required,notblank,max=200"`
-	ImageURL   *string    `json:"imageUrl,omitempty" validate:"omitempty,url"`
+	ImageURL   *string    `json:"imageUrl,omitempty" validate:"omitempty"`
 	SourceURL  *string    `json:"sourceUrl,omitempty" validate:"omitempty,url"`
 	Review     *string    `json:"review,omitempty"`
 	ConsumedOn DateOnly   `json:"consumedOn" validate:"required"`
@@ -307,7 +307,7 @@ func normalizeURL(value string, invalidErr error, allowRelative bool) (string, e
 		return "", invalidErr
 	}
 	if allowRelative {
-		if parsed.Scheme == "" && strings.HasPrefix(parsed.Path, "/") {
+		if parsed.Scheme == "" && parsed.Host == "" && strings.HasPrefix(parsed.Path, "/uploads/images/") {
 			return trimmed, nil
 		}
 	}
