@@ -196,15 +196,15 @@ func (q *Queries) ListJournalEntriesByOwner(ctx context.Context, ownerID string)
 
 const updateJournalEntry = `-- name: UpdateJournalEntry :one
 UPDATE journal_entries
-SET type = $1,
-    title = $2,
-    image_url = $3,
-    source_url = $4,
-    review = $5,
-    consumed_on = $6,
-    updated_at = $7
-WHERE id = $8
-  AND owner_id = $9
+SET type = CASE WHEN $1 THEN $2 ELSE type END,
+    title = CASE WHEN $3 THEN $4 ELSE title END,
+    image_url = CASE WHEN $5 THEN $6 ELSE image_url END,
+    source_url = CASE WHEN $7 THEN $8 ELSE source_url END,
+    review = CASE WHEN $9 THEN $10 ELSE review END,
+    consumed_on = CASE WHEN $11 THEN $12 ELSE consumed_on END,
+    updated_at = $13
+WHERE id = $14
+  AND owner_id = $15
 RETURNING id,
           owner_id,
           type,
@@ -218,26 +218,38 @@ RETURNING id,
 `
 
 type UpdateJournalEntryParams struct {
-	Type       string             `json:"type"`
-	Title      string             `json:"title"`
-	ImageURL   pgtype.Text        `json:"image_url"`
-	SourceURL  pgtype.Text        `json:"source_url"`
-	Review     pgtype.Text        `json:"review"`
-	ConsumedOn pgtype.Date        `json:"consumed_on"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    string             `json:"owner_id"`
+	SetType       bool              `json:"set_type"`
+	Type          string            `json:"type"`
+	SetTitle      bool              `json:"set_title"`
+	Title         string            `json:"title"`
+	SetImageURL   bool              `json:"set_image_url"`
+	ImageURL      pgtype.Text       `json:"image_url"`
+	SetSourceURL  bool              `json:"set_source_url"`
+	SourceURL     pgtype.Text       `json:"source_url"`
+	SetReview     bool              `json:"set_review"`
+	Review        pgtype.Text       `json:"review"`
+	SetConsumedOn bool              `json:"set_consumed_on"`
+	ConsumedOn    pgtype.Date       `json:"consumed_on"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ID            uuid.UUID         `json:"id"`
+	OwnerID       string            `json:"owner_id"`
 }
 
 type UpdateJournalEntryRow = JournalEntry
 
 func (q *Queries) UpdateJournalEntry(ctx context.Context, arg UpdateJournalEntryParams) (UpdateJournalEntryRow, error) {
 	row := q.db.QueryRow(ctx, updateJournalEntry,
+		arg.SetType,
 		arg.Type,
+		arg.SetTitle,
 		arg.Title,
+		arg.SetImageURL,
 		arg.ImageURL,
+		arg.SetSourceURL,
 		arg.SourceURL,
+		arg.SetReview,
 		arg.Review,
+		arg.SetConsumedOn,
 		arg.ConsumedOn,
 		arg.UpdatedAt,
 		arg.ID,

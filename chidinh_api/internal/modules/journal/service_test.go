@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -91,6 +92,20 @@ func TestServiceCreateRejectsInvalidFields(t *testing.T) {
 	})
 	if !errors.Is(err, ErrInvalidTitle) {
 		t.Fatalf("expected invalid title error, got %v", err)
+	}
+}
+
+func TestServiceCreateRejectsTitleLongByRunes(t *testing.T) {
+	svc := NewService(&captureJournalStore{})
+	longTitle := strings.Repeat("界", 201)
+
+	_, err := svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      longTitle,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if !errors.Is(err, ErrTitleTooLong) {
+		t.Fatalf("expected long title error, got %v", err)
 	}
 }
 

@@ -62,12 +62,12 @@ RETURNING id,
 
 -- name: UpdateJournalEntry :one
 UPDATE journal_entries
-SET type = sqlc.arg(type),
-    title = sqlc.arg(title),
-    image_url = sqlc.narg(image_url),
-    source_url = sqlc.narg(source_url),
-    review = sqlc.narg(review),
-    consumed_on = sqlc.arg(consumed_on),
+SET type = CASE WHEN sqlc.arg(set_type) THEN sqlc.arg(type) ELSE type END,
+    title = CASE WHEN sqlc.arg(set_title) THEN sqlc.arg(title) ELSE title END,
+    image_url = CASE WHEN sqlc.arg(set_image_url) THEN sqlc.narg(image_url) ELSE image_url END,
+    source_url = CASE WHEN sqlc.arg(set_source_url) THEN sqlc.narg(source_url) ELSE source_url END,
+    review = CASE WHEN sqlc.arg(set_review) THEN sqlc.narg(review) ELSE review END,
+    consumed_on = CASE WHEN sqlc.arg(set_consumed_on) THEN sqlc.arg(consumed_on) ELSE consumed_on END,
     updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id)
   AND owner_id = sqlc.arg(owner_id)

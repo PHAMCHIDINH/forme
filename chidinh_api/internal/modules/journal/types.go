@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 var (
@@ -280,7 +281,7 @@ func normalizeTitle(value string) (string, error) {
 	if trimmed == "" {
 		return "", ErrInvalidTitle
 	}
-	if len(trimmed) > 200 {
+	if utf8.RuneCountInString(trimmed) > 200 {
 		return "", ErrTitleTooLong
 	}
 

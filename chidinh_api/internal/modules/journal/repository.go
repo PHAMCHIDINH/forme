@@ -58,69 +58,22 @@ func (r *Repository) Update(ctx context.Context, ownerID string, entryID string,
 		return Entry{}, ErrNotFound
 	}
 
-	current, err := r.queries.GetJournalEntryByIDAndOwner(ctx, db.GetJournalEntryByIDAndOwnerParams{
-		ID:      entryUUID,
-		OwnerID: ownerID,
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return Entry{}, ErrNotFound
-		}
-		return Entry{}, fmt.Errorf("failed to load journal entry before update: %w", err)
-	}
-
-	next := journalWriteStateFromRow(current)
-
-	if params.Type.Present {
-		if params.Type.Null {
-			return Entry{}, ErrInvalidType
-		}
-		next.Type = params.Type.Value
-	}
-	if params.Title.Present {
-		if params.Title.Null {
-			return Entry{}, ErrInvalidTitle
-		}
-		next.Title = params.Title.Value
-	}
-	if params.ImageURL.Present {
-		if params.ImageURL.Null {
-			next.ImageURL = nil
-		} else {
-			next.ImageURL = stringPtrClone(params.ImageURL.Value)
-		}
-	}
-	if params.SourceURL.Present {
-		if params.SourceURL.Null {
-			next.SourceURL = nil
-		} else {
-			next.SourceURL = stringPtrClone(params.SourceURL.Value)
-		}
-	}
-	if params.Review.Present {
-		if params.Review.Null {
-			next.Review = nil
-		} else {
-			next.Review = stringPtrClone(params.Review.Value)
-		}
-	}
-	if params.ConsumedOn.Present {
-		if params.ConsumedOn.Null {
-			return Entry{}, ErrInvalidConsumedOn
-		}
-		next.ConsumedOn = params.ConsumedOn.Value
-	}
-
 	row, err := r.queries.UpdateJournalEntry(ctx, db.UpdateJournalEntryParams{
-		Type:       string(next.Type),
-		Title:      next.Title,
-		ImageURL:   textPtrToPgtype(next.ImageURL),
-		SourceURL:  textPtrToPgtype(next.SourceURL),
-		Review:     textPtrToPgtype(next.Review),
-		ConsumedOn: dateOnlyToPgtype(next.ConsumedOn),
-		UpdatedAt:   pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
-		ID:         entryUUID,
-		OwnerID:    ownerID,
+		SetType:       params.Type.Present,
+		Type:          string(params.Type.Value),
+		SetTitle:      params.Title.Present,
+		Title:         params.Title.Value,
+		SetImageURL:   params.ImageURL.Present,
+		ImageURL:      textPtrToPgtype(optionalStringPtr(params.ImageURL)),
+		SetSourceURL:  params.SourceURL.Present,
+		SourceURL:     textPtrToPgtype(optionalStringPtr(params.SourceURL)),
+		SetReview:     params.Review.Present,
+		Review:        textPtrToPgtype(optionalStringPtr(params.Review)),
+		SetConsumedOn: params.ConsumedOn.Present,
+		ConsumedOn:    dateOnlyToPgtype(params.ConsumedOn.Value),
+		UpdatedAt:     pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true},
+		ID:            entryUUID,
+		OwnerID:       ownerID,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -152,26 +105,6 @@ func (r *Repository) Delete(ctx context.Context, ownerID string, entryID string)
 	return nil
 }
 
-type journalWriteState struct {
-	Type       EntryType
-	Title      string
-	ImageURL   *string
-	SourceURL  *string
-	Review     *string
-	ConsumedOn DateOnly
-}
-
-func journalWriteStateFromRow(item db.JournalEntry) journalWriteState {
-	return journalWriteState{
-		Type:       EntryType(item.Type),
-		Title:      item.Title,
-		ImageURL:   stringPtrFromPgtype(item.ImageURL),
-		SourceURL:  stringPtrFromPgtype(item.SourceURL),
-		Review:     stringPtrFromPgtype(item.Review),
-		ConsumedOn: DateOnlyFromTime(item.ConsumedOn.Time),
-	}
-}
-
 func mapJournalEntryRow(item db.JournalEntry) Entry {
 	return Entry{
 		ID:         item.ID.String(),
@@ -186,17 +119,12 @@ func mapJournalEntryRow(item db.JournalEntry) Entry {
 	}
 }
 
-func stringPtrClone(value string) *string {
-	clone := value
-	return &clone
-}
-
 func stringPtrFromPgtype(value pgtype.Text) *string {
 	if !value.Valid {
 		return nil
 	}
 
-	return stringPtrClone(value.String)
+	return &value.String
 }
 
 func textPtrToPgtype(value *string) pgtype.Text {
@@ -209,4 +137,12 @@ func textPtrToPgtype(value *string) pgtype.Text {
 
 func dateOnlyToPgtype(value DateOnly) pgtype.Date {
 	return pgtype.Date{Time: value.Time, Valid: !value.Time.IsZero()}
+}
+
+func optionalStringPtr(field PatchField[string]) *string {
+	if field.HasValue() {
+		return &field.Value
+	}
+
+	return nil
 }
