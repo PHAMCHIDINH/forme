@@ -1,24 +1,10 @@
 package journal
 
-import (
-	"context"
-	"errors"
-)
+import "context"
 
 type Service struct {
 	repository JournalStore
 }
-
-var (
-	ErrInvalidType       = errors.New("type is required")
-	ErrInvalidTitle      = errors.New("title is required")
-	ErrTitleTooLong      = errors.New("title must be at most 200 characters")
-	ErrInvalidConsumedOn = errors.New("consumedOn is required")
-	ErrInvalidImageURL   = errors.New("image URL is invalid")
-	ErrInvalidSourceURL   = errors.New("source URL is invalid")
-	ErrInvalidUpdate     = errors.New("at least one field is required")
-	ErrNotFound          = errors.New("journal entry not found")
-)
 
 type JournalStore interface {
 	List(ctx context.Context, ownerID string) ([]Entry, error)
