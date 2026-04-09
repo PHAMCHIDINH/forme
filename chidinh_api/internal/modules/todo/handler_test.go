@@ -781,7 +781,7 @@ func newTodoValidationRouter() http.Handler {
 	authHandler := auth.NewHandler(cfg, authService, validation.New())
 	todoHandler := todo.NewHandler(todo.NewService(&todo.Repository{}), validation.New())
 
-	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, authMiddleware)
+	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, nil, authMiddleware)
 }
 
 func newTodoTestRouter(store todo.TodoStore) http.Handler {
@@ -806,7 +806,7 @@ func newTodoTestRouter(store todo.TodoStore) http.Handler {
 	authHandler := auth.NewHandler(cfg, authService, validation.New())
 	todoHandler := todo.NewHandler(todo.NewService(store), validation.New())
 
-	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, authMiddleware)
+	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, nil, authMiddleware)
 }
 
 func authCookie(t *testing.T) *http.Cookie {

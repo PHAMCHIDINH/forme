@@ -12,7 +12,7 @@ import (
 
 func TestHealthRoute(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	router := NewRouter(config.Config{}, logger, nil, nil, nil)
+	router := NewRouter(config.Config{}, logger, nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 

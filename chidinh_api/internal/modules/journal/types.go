@@ -195,6 +195,15 @@ func (r *CreateRequest) Normalize() {
 	r.ConsumedOn = DateOnlyFromTime(r.ConsumedOn.Time)
 }
 
+func (r *CreateRequest) ValidateFields(report func(field string, tag string)) {
+	if strings.TrimSpace(r.Title) == "" {
+		report("title", "notblank")
+	}
+	if utf8.RuneCountInString(strings.TrimSpace(r.Title)) > 200 {
+		report("title", "max")
+	}
+}
+
 func (r CreateRequest) ToParams() CreateParams {
 	return CreateParams{
 		Type:       r.Type,
@@ -235,6 +244,33 @@ func (r *UpdateRequest) Normalize() {
 	}
 	if r.ConsumedOn.Present && !r.ConsumedOn.Null {
 		r.ConsumedOn.Value = DateOnlyFromTime(r.ConsumedOn.Value.Time)
+	}
+}
+
+func (r *UpdateRequest) ValidateFields(report func(field string, tag string)) {
+	if !r.Type.Present && !r.Title.Present && !r.ImageURL.Present && !r.SourceURL.Present && !r.Review.Present && !r.ConsumedOn.Present {
+		report("update", "required")
+	}
+
+	if r.Type.Present {
+		if r.Type.Null {
+			report("type", "required")
+		} else if normalized := EntryType(strings.ToLower(strings.TrimSpace(string(r.Type.Value)))); normalized != EntryTypeBook && normalized != EntryTypeVideo {
+			report("type", "oneof")
+		}
+	}
+
+	if r.Title.Present {
+		if r.Title.Null || strings.TrimSpace(r.Title.Value) == "" {
+			report("title", "notblank")
+		}
+		if utf8.RuneCountInString(strings.TrimSpace(r.Title.Value)) > 200 {
+			report("title", "max")
+		}
+	}
+
+	if r.ConsumedOn.Present && r.ConsumedOn.Null {
+		report("consumedOn", "required")
 	}
 }
 
