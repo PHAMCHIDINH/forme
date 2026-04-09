@@ -311,7 +311,10 @@ func normalizeURL(value string, invalidErr error, allowRelative bool) (string, e
 			return trimmed, nil
 		}
 	}
-	if parsed.Scheme == "" || parsed.Host == "" {
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", invalidErr
+	}
+	if parsed.Host == "" {
 		return "", invalidErr
 	}
 

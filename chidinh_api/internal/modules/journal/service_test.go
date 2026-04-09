@@ -155,6 +155,32 @@ func TestServiceCreateRejectsNonUploadRelativeImagePath(t *testing.T) {
 	}
 }
 
+func TestServiceCreateRejectsNonHttpAbsoluteUrls(t *testing.T) {
+	svc := NewService(&captureJournalStore{})
+	ftpSource := "ftp://example.com/book"
+	javascriptImage := "javascript://alert(1)"
+
+	_, err := svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      "Launch notes",
+		SourceURL:  &ftpSource,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if !errors.Is(err, ErrInvalidSourceURL) {
+		t.Fatalf("expected non-http source URL to fail, got %v", err)
+	}
+
+	_, err = svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      "Launch notes",
+		ImageURL:   &javascriptImage,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if !errors.Is(err, ErrInvalidImageURL) {
+		t.Fatalf("expected non-http image URL to fail, got %v", err)
+	}
+}
+
 func TestServiceUpdateNormalizesPatchAndDelegates(t *testing.T) {
 	store := &captureJournalStore{}
 	svc := NewService(store)
