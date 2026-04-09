@@ -3,11 +3,16 @@ package journal_test
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -549,6 +554,100 @@ func TestDeleteReturnsNotFoundOverHTTP(t *testing.T) {
 	}
 }
 
+func TestUploadImageRejectsMissingFileOverHTTP(t *testing.T) {
+	router := newJournalTestRouter(newFakeJournalStore())
+
+	req := newMultipartRequest(t, http.MethodPost, "/api/v1/uploads/images", nil, "")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for missing file")
+	}
+	if resp.Error.Message != "file is required" {
+		t.Fatalf("expected missing file message, got %q", resp.Error.Message)
+	}
+}
+
+func TestUploadImageRejectsNonImageOverHTTP(t *testing.T) {
+	router := newJournalTestRouter(newFakeJournalStore())
+
+	req := newMultipartRequest(t, http.MethodPost, "/api/v1/uploads/images", []byte("not an image"), "note.txt")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for non-image upload")
+	}
+	if resp.Error.Message != "file must be an image" {
+		t.Fatalf("expected non-image message, got %q", resp.Error.Message)
+	}
+}
+
+func TestUploadImageStoresFileAndReturnsURLOverHTTP(t *testing.T) {
+	chdirTemp(t)
+	router := newJournalTestRouter(newFakeJournalStore())
+	imageBytes := mustDecodeBase64(t, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+Xn4QAAAAASUVORK5CYII=")
+
+	req := newMultipartRequest(t, http.MethodPost, "/api/v1/uploads/images", imageBytes, "cover.png")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, rec.Code)
+	}
+
+	var resp struct {
+		Data struct {
+			ImageURL string `json:"imageUrl"`
+		} `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON response, got error: %v", err)
+	}
+	if resp.Error != nil {
+		t.Fatalf("expected upload success, got error: %+v", *resp.Error)
+	}
+	if !strings.HasPrefix(resp.Data.ImageURL, "/uploads/images/") {
+		t.Fatalf("expected upload URL under /uploads/images/, got %q", resp.Data.ImageURL)
+	}
+
+	savedPath := filepath.Join(strings.TrimPrefix(resp.Data.ImageURL, "/"))
+	storedBytes, err := os.ReadFile(savedPath)
+	if err != nil {
+		t.Fatalf("expected uploaded file to be stored, got error: %v", err)
+	}
+	if !bytes.Equal(storedBytes, imageBytes) {
+		t.Fatalf("expected stored file to match upload, got %d bytes", len(storedBytes))
+	}
+}
+
 func newJournalTestRouter(store journal.JournalStore) http.Handler {
 	cfg := config.Config{JWTSecret: "test-secret"}
 	owner := db.Owner{
@@ -573,6 +672,60 @@ func newJournalTestRouter(store journal.JournalStore) http.Handler {
 	journalHandler := journal.NewHandler(journal.NewService(store), validation.New())
 
 	return httpserver.NewRouter(cfg, nil, authHandler, todoHandler, journalHandler, authMiddleware)
+}
+
+func newMultipartRequest(t *testing.T, method string, target string, fileContents []byte, filename string) *http.Request {
+	t.Helper()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if fileContents != nil {
+		part, err := writer.CreateFormFile("file", filename)
+		if err != nil {
+			t.Fatalf("expected multipart file part, got error: %v", err)
+		}
+		if _, err := part.Write(fileContents); err != nil {
+			t.Fatalf("expected multipart file contents to write, got error: %v", err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("expected multipart body to close, got error: %v", err)
+	}
+
+	req := httptest.NewRequest(method, target, body)
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	return req
+}
+
+func chdirTemp(t *testing.T) {
+	t.Helper()
+
+	original, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("expected current working directory, got error: %v", err)
+	}
+
+	dir := t.TempDir()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("expected to change working directory, got error: %v", err)
+	}
+
+	t.Cleanup(func() {
+		_ = os.Chdir(original)
+	})
+}
+
+func mustDecodeBase64(t *testing.T, value string) []byte {
+	t.Helper()
+
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		t.Fatalf("expected base64 to decode, got error: %v", err)
+	}
+
+	return decoded
 }
 
 func authCookie(t *testing.T) *http.Cookie {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	dbqueries "github.com/PHAMCHIDINH/forme/chidinh_api/db/sqlc"
@@ -54,6 +55,10 @@ func Run(cfg config.Config, logger *slog.Logger) error {
 	journalRepository := journal.NewRepository(queries)
 	journalService := journal.NewService(journalRepository)
 	journalHandler := journal.NewHandler(journalService, requestValidator)
+
+	if err := os.MkdirAll(journal.UploadImagesDir, 0o755); err != nil {
+		return fmt.Errorf("upload directory initialization failed: %w", err)
+	}
 
 	server := &http.Server{
 		Addr:    addr,

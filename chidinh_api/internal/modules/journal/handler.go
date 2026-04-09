@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 
@@ -12,6 +14,8 @@ import (
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/middleware"
 	"github.com/PHAMCHIDINH/forme/chidinh_api/internal/platform/validation"
 )
+
+const UploadImagesDir = "./uploads/images"
 
 type Handler struct {
 	service   *Service
@@ -114,6 +118,66 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) UploadImage(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "invalid multipart payload")
+		return
+	}
+	if r.MultipartForm != nil {
+		defer func() {
+			_ = r.MultipartForm.RemoveAll()
+		}()
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "file is required")
+		return
+	}
+	defer file.Close()
+
+	contentType, err := detectUploadContentType(file)
+	if err != nil {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "failed to read uploaded file")
+		return
+	}
+	ext, ok := uploadImageExtension(contentType)
+	if !ok {
+		apiresponse.WriteError(w, http.StatusBadRequest, "bad_request", "file must be an image")
+		return
+	}
+
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to process uploaded file")
+		return
+	}
+	if err := os.MkdirAll(UploadImagesDir, 0o755); err != nil {
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to store uploaded file")
+		return
+	}
+
+	savedFile, err := os.CreateTemp(UploadImagesDir, "upload-*"+ext)
+	if err != nil {
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to store uploaded file")
+		return
+	}
+	defer func() {
+		_ = savedFile.Close()
+	}()
+
+	if _, err := io.Copy(savedFile, file); err != nil {
+		_ = savedFile.Close()
+		_ = os.Remove(savedFile.Name())
+		apiresponse.WriteError(w, http.StatusInternalServerError, "internal_error", "failed to store uploaded file")
+		return
+	}
+
+	imageURL := "/uploads/images/" + filepath.Base(savedFile.Name())
+	apiresponse.WriteJSON(w, http.StatusCreated, map[string]any{
+		"imageUrl": imageURL,
+	})
+}
+
 func createValidationMessage(errs validation.Errors) string {
 	if errs.Has("title", "notblank") {
 		return "title is required"
@@ -207,4 +271,31 @@ func isJournalValidationError(err error) bool {
 		errors.Is(err, ErrInvalidImageURL) ||
 		errors.Is(err, ErrInvalidSourceURL) ||
 		errors.Is(err, ErrInvalidUpdate)
+}
+
+func detectUploadContentType(file io.ReadSeeker) (string, error) {
+	sample := make([]byte, 512)
+	n, err := file.Read(sample)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+
+	return http.DetectContentType(sample[:n]), nil
+}
+
+func uploadImageExtension(contentType string) (string, bool) {
+	switch contentType {
+	case "image/jpeg":
+		return ".jpg", true
+	case "image/png":
+		return ".png", true
+	case "image/gif":
+		return ".gif", true
+	case "image/webp":
+		return ".webp", true
+	case "image/bmp":
+		return ".bmp", true
+	default:
+		return "", false
+	}
 }

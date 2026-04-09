@@ -3,6 +3,7 @@ package httpserver
 import (
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
 
@@ -44,6 +45,13 @@ func NewRouter(cfg config.Config, logger *slog.Logger, authHandler *auth.Handler
 		r.Patch("/{entryID}", journalHandler.Update)
 		r.Delete("/{entryID}", journalHandler.Delete)
 	})
+
+	router.Route("/api/v1/uploads", func(r chi.Router) {
+		r.Use(authMiddleware.Require)
+		r.Post("/images", journalHandler.UploadImage)
+	})
+
+	router.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(filepath.Dir(journal.UploadImagesDir)))))
 
 	return router
 }
