@@ -130,6 +130,9 @@ func createValidationMessage(errs validation.Errors) string {
 	if errs.Has("consumedOn", "required") {
 		return "consumedOn is required"
 	}
+	if errs.Has("imageUrl", "url") {
+		return "image URL is invalid"
+	}
 	if errs.Has("sourceUrl", "url") {
 		return "source URL is invalid"
 	}
@@ -155,6 +158,9 @@ func updateValidationMessage(errs validation.Errors) string {
 	}
 	if errs.Has("consumedOn", "required") {
 		return "consumedOn is required"
+	}
+	if errs.Has("imageUrl", "url") {
+		return "image URL is invalid"
 	}
 	if errs.Has("sourceUrl", "url") {
 		return "source URL is invalid"

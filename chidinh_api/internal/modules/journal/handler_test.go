@@ -165,6 +165,39 @@ func TestCreateRejectsBlankTitleOverHTTP(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsInvalidImageURLOverHTTP(t *testing.T) {
+	store := newFakeJournalStore()
+	router := newJournalTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/journal/", bytes.NewBufferString(`{"type":"book","title":"Launch notes","imageUrl":"/foo","consumedOn":"2026-04-02"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for invalid imageUrl")
+	}
+	if resp.Error.Message != "image URL is invalid" {
+		t.Fatalf("expected image URL validation message, got %q", resp.Error.Message)
+	}
+	if len(store.createParams) != 0 {
+		t.Fatalf("expected create to be rejected before store call, got %#v", store.createParams)
+	}
+}
+
 func TestCreateRejectsMissingConsumedOnOverHTTP(t *testing.T) {
 	router := newJournalTestRouter(newFakeJournalStore())
 
@@ -278,6 +311,48 @@ func TestUpdateRejectsNullTitleOverHTTP(t *testing.T) {
 	}
 	if resp.Error.Message != "title is required" {
 		t.Fatalf("expected title validation message, got %q", resp.Error.Message)
+	}
+}
+
+func TestUpdateRejectsInvalidImageURLOverHTTP(t *testing.T) {
+	store := newFakeJournalStore(
+		journal.Entry{
+			ID:         "journal-1",
+			Type:       journal.EntryTypeBook,
+			Title:      "Original title",
+			ConsumedOn: journal.DateOnlyFromTime(time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)),
+			CreatedAt:  time.Date(2026, 4, 1, 8, 0, 0, 0, time.UTC),
+			UpdatedAt:  time.Date(2026, 4, 1, 8, 0, 0, 0, time.UTC),
+		},
+	)
+	router := newJournalTestRouter(store)
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/journal/journal-1", bytes.NewBufferString(`{"imageUrl":"/foo"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for invalid imageUrl patch")
+	}
+	if resp.Error.Message != "image URL is invalid" {
+		t.Fatalf("expected image URL validation message, got %q", resp.Error.Message)
+	}
+	if len(store.updateParams) != 0 {
+		t.Fatalf("expected update to be rejected before store call, got %#v", store.updateParams)
 	}
 }
 

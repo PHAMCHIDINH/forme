@@ -204,6 +204,16 @@ func (r *CreateRequest) ValidateFields(report func(field string, tag string)) {
 	if utf8.RuneCountInString(strings.TrimSpace(r.Title)) > 200 {
 		report("title", "max")
 	}
+	if r.ImageURL != nil {
+		if _, err := normalizeURL(*r.ImageURL, ErrInvalidImageURL, true); err != nil {
+			report("imageUrl", "url")
+		}
+	}
+	if r.SourceURL != nil {
+		if _, err := normalizeURL(*r.SourceURL, ErrInvalidSourceURL, false); err != nil {
+			report("sourceUrl", "url")
+		}
+	}
 }
 
 func (r CreateRequest) ToParams() CreateParams {
@@ -281,6 +291,18 @@ func (r *UpdateRequest) ValidateFields(report func(field string, tag string)) {
 		}
 		if utf8.RuneCountInString(strings.TrimSpace(r.Title.Value)) > 200 {
 			report("title", "max")
+		}
+	}
+
+	if r.ImageURL.Present && !r.ImageURL.Null {
+		if _, err := normalizeURL(r.ImageURL.Value, ErrInvalidImageURL, true); err != nil {
+			report("imageUrl", "url")
+		}
+	}
+
+	if r.SourceURL.Present && !r.SourceURL.Null {
+		if _, err := normalizeURL(r.SourceURL.Value, ErrInvalidSourceURL, false); err != nil {
+			report("sourceUrl", "url")
 		}
 	}
 
