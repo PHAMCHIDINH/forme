@@ -161,6 +161,35 @@ func TestCreateRejectsBlankTitleOverHTTP(t *testing.T) {
 	}
 }
 
+func TestCreateRejectsMissingConsumedOnOverHTTP(t *testing.T) {
+	router := newJournalTestRouter(newFakeJournalStore())
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/journal/", bytes.NewBufferString(`{"type":"book","title":"Launch notes"}`))
+	req.AddCookie(authCookie(t))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+
+	var resp struct {
+		Data  any                   `json:"data"`
+		Error *apiresponse.APIError `json:"error"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("expected JSON error response, got error: %v", err)
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error response for missing consumedOn")
+	}
+	if resp.Error.Message != "consumedOn is required" {
+		t.Fatalf("expected consumedOn validation message, got %q", resp.Error.Message)
+	}
+}
+
 func TestCreateRejectsUnknownJSONFieldsOverHTTP(t *testing.T) {
 	router := newJournalTestRouter(newFakeJournalStore())
 

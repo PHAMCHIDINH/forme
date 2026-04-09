@@ -192,7 +192,9 @@ func (r *CreateRequest) Normalize() {
 		trimmed := strings.TrimSpace(*r.SourceURL)
 		r.SourceURL = &trimmed
 	}
-	r.ConsumedOn = DateOnlyFromTime(r.ConsumedOn.Time)
+	if !r.ConsumedOn.Time.IsZero() {
+		r.ConsumedOn = DateOnlyFromTime(r.ConsumedOn.Time)
+	}
 }
 
 func (r *CreateRequest) ValidateFields(report func(field string, tag string)) {
@@ -237,7 +239,9 @@ func (p *CreateParams) Normalize() {
 		trimmed := strings.TrimSpace(*p.SourceURL)
 		p.SourceURL = &trimmed
 	}
-	p.ConsumedOn = DateOnlyFromTime(p.ConsumedOn.Time)
+	if !p.ConsumedOn.Time.IsZero() {
+		p.ConsumedOn = DateOnlyFromTime(p.ConsumedOn.Time)
+	}
 }
 
 func (r *UpdateRequest) Normalize() {
