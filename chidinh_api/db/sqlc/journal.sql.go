@@ -56,18 +56,7 @@ type CreateJournalEntryParams struct {
 	ConsumedOn pgtype.Date `json:"consumed_on"`
 }
 
-type CreateJournalEntryRow struct {
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    string             `json:"owner_id"`
-	Type       string             `json:"type"`
-	Title      string             `json:"title"`
-	ImageURL   pgtype.Text        `json:"image_url"`
-	SourceURL  pgtype.Text        `json:"source_url"`
-	Review     pgtype.Text        `json:"review"`
-	ConsumedOn pgtype.Date        `json:"consumed_on"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-}
+type CreateJournalEntryRow = JournalEntry
 
 func (q *Queries) CreateJournalEntry(ctx context.Context, arg CreateJournalEntryParams) (CreateJournalEntryRow, error) {
 	row := q.db.QueryRow(ctx, createJournalEntry,
@@ -136,18 +125,7 @@ type GetJournalEntryByIDAndOwnerParams struct {
 	OwnerID string    `json:"owner_id"`
 }
 
-type GetJournalEntryByIDAndOwnerRow struct {
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    string             `json:"owner_id"`
-	Type       string             `json:"type"`
-	Title      string             `json:"title"`
-	ImageURL   pgtype.Text        `json:"image_url"`
-	SourceURL  pgtype.Text        `json:"source_url"`
-	Review     pgtype.Text        `json:"review"`
-	ConsumedOn pgtype.Date        `json:"consumed_on"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-}
+type GetJournalEntryByIDAndOwnerRow = JournalEntry
 
 func (q *Queries) GetJournalEntryByIDAndOwner(ctx context.Context, arg GetJournalEntryByIDAndOwnerParams) (GetJournalEntryByIDAndOwnerRow, error) {
 	row := q.db.QueryRow(ctx, getJournalEntryByIDAndOwner, arg.ID, arg.OwnerID)
@@ -183,25 +161,10 @@ WHERE owner_id = $1
 ORDER BY consumed_on DESC, created_at DESC
 `
 
-type ListJournalEntriesByOwnerParams struct {
-	OwnerID string `json:"owner_id"`
-}
+type ListJournalEntriesByOwnerRow = JournalEntry
 
-type ListJournalEntriesByOwnerRow struct {
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    string             `json:"owner_id"`
-	Type       string             `json:"type"`
-	Title      string             `json:"title"`
-	ImageURL   pgtype.Text        `json:"image_url"`
-	SourceURL  pgtype.Text        `json:"source_url"`
-	Review     pgtype.Text        `json:"review"`
-	ConsumedOn pgtype.Date        `json:"consumed_on"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) ListJournalEntriesByOwner(ctx context.Context, arg ListJournalEntriesByOwnerParams) ([]ListJournalEntriesByOwnerRow, error) {
-	rows, err := q.db.Query(ctx, listJournalEntriesByOwner, arg.OwnerID)
+func (q *Queries) ListJournalEntriesByOwner(ctx context.Context, ownerID string) ([]ListJournalEntriesByOwnerRow, error) {
+	rows, err := q.db.Query(ctx, listJournalEntriesByOwner, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,18 +229,7 @@ type UpdateJournalEntryParams struct {
 	OwnerID    string             `json:"owner_id"`
 }
 
-type UpdateJournalEntryRow struct {
-	ID         uuid.UUID          `json:"id"`
-	OwnerID    string             `json:"owner_id"`
-	Type       string             `json:"type"`
-	Title      string             `json:"title"`
-	ImageURL   pgtype.Text        `json:"image_url"`
-	SourceURL  pgtype.Text        `json:"source_url"`
-	Review     pgtype.Text        `json:"review"`
-	ConsumedOn pgtype.Date        `json:"consumed_on"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-}
+type UpdateJournalEntryRow = JournalEntry
 
 func (q *Queries) UpdateJournalEntry(ctx context.Context, arg UpdateJournalEntryParams) (UpdateJournalEntryRow, error) {
 	row := q.db.QueryRow(ctx, updateJournalEntry,
