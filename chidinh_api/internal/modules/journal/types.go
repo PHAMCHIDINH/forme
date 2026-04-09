@@ -296,7 +296,7 @@ func normalizeDateOnly(value DateOnly) (DateOnly, error) {
 	return DateOnlyFromTime(value.Time), nil
 }
 
-func normalizeURL(value string, invalidErr error) (string, error) {
+func normalizeURL(value string, invalidErr error, allowRelative bool) (string, error) {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
 		return "", invalidErr
@@ -305,6 +305,11 @@ func normalizeURL(value string, invalidErr error) (string, error) {
 	parsed, err := url.Parse(trimmed)
 	if err != nil {
 		return "", invalidErr
+	}
+	if allowRelative {
+		if parsed.Scheme == "" && strings.HasPrefix(parsed.Path, "/") {
+			return trimmed, nil
+		}
 	}
 	if parsed.Scheme == "" || parsed.Host == "" {
 		return "", invalidErr

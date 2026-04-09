@@ -93,6 +93,17 @@ func TestServiceCreateRejectsInvalidFields(t *testing.T) {
 	if !errors.Is(err, ErrInvalidTitle) {
 		t.Fatalf("expected invalid title error, got %v", err)
 	}
+
+	relativeSource := "/uploads/images/book.png"
+	_, err = svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      "Launch notes",
+		SourceURL:  &relativeSource,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if !errors.Is(err, ErrInvalidSourceURL) {
+		t.Fatalf("expected invalid source URL error for relative path, got %v", err)
+	}
 }
 
 func TestServiceCreateRejectsTitleLongByRunes(t *testing.T) {
@@ -106,6 +117,26 @@ func TestServiceCreateRejectsTitleLongByRunes(t *testing.T) {
 	})
 	if !errors.Is(err, ErrTitleTooLong) {
 		t.Fatalf("expected long title error, got %v", err)
+	}
+}
+
+func TestServiceCreateAllowsRelativeImageUploadPath(t *testing.T) {
+	svc := NewService(&captureJournalStore{})
+	relativeImage := "/uploads/images/cover.png"
+	sourceURL := "https://example.com/book"
+
+	got, err := svc.Create(context.Background(), "owner-123", CreateParams{
+		Type:       EntryTypeBook,
+		Title:      "Launch notes",
+		ImageURL:   &relativeImage,
+		SourceURL:  &sourceURL,
+		ConsumedOn: DateOnlyFromTime(time.Date(2026, 4, 2, 0, 0, 0, 0, time.UTC)),
+	})
+	if err != nil {
+		t.Fatalf("expected relative image upload path to be accepted, got error: %v", err)
+	}
+	if got.ImageURL == nil || *got.ImageURL != relativeImage {
+		t.Fatalf("expected relative image path to round-trip, got %#v", got.ImageURL)
 	}
 }
 

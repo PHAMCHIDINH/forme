@@ -63,7 +63,7 @@ func (s *Service) NormalizeCreateParams(params *CreateParams) error {
 	params.ConsumedOn = consumedOn
 
 	if params.ImageURL != nil {
-		normalized, err := normalizeURL(*params.ImageURL, ErrInvalidImageURL)
+		normalized, err := normalizeURL(*params.ImageURL, ErrInvalidImageURL, true)
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (s *Service) NormalizeCreateParams(params *CreateParams) error {
 	}
 
 	if params.SourceURL != nil {
-		normalized, err := normalizeURL(*params.SourceURL, ErrInvalidSourceURL)
+		normalized, err := normalizeURL(*params.SourceURL, ErrInvalidSourceURL, false)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (s *Service) NormalizeUpdateParams(params *UpdateParams) error {
 		if params.ImageURL.Null {
 			params.ImageURL.Clear()
 		} else {
-			normalized, err := normalizeURL(params.ImageURL.Value, ErrInvalidImageURL)
+			normalized, err := normalizeURL(params.ImageURL.Value, ErrInvalidImageURL, true)
 			if err != nil {
 				return err
 			}
@@ -126,7 +126,7 @@ func (s *Service) NormalizeUpdateParams(params *UpdateParams) error {
 		if params.SourceURL.Null {
 			params.SourceURL.Clear()
 		} else {
-			normalized, err := normalizeURL(params.SourceURL.Value, ErrInvalidSourceURL)
+			normalized, err := normalizeURL(params.SourceURL.Value, ErrInvalidSourceURL, false)
 			if err != nil {
 				return err
 			}
