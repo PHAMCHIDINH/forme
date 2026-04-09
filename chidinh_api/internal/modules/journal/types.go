@@ -1,8 +1,10 @@
 package journal
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -179,6 +181,44 @@ type UpdateRequest struct {
 	SourceURL  PatchField[string]    `json:"sourceUrl,omitempty"`
 	Review     PatchField[string]    `json:"review,omitempty"`
 	ConsumedOn PatchField[DateOnly]  `json:"consumedOn,omitempty"`
+}
+
+func (r *CreateRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Type       EntryType   `json:"type"`
+		Title      string      `json:"title"`
+		ImageURL   *string     `json:"imageUrl"`
+		SourceURL  *string     `json:"sourceUrl"`
+		Review     *string     `json:"review"`
+		ConsumedOn *DateOnly   `json:"consumedOn"`
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&raw); err != nil {
+		return err
+	}
+	var extra json.RawMessage
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return errors.New("unexpected trailing JSON data")
+		}
+		return err
+	}
+
+	r.Type = raw.Type
+	r.Title = raw.Title
+	r.ImageURL = raw.ImageURL
+	r.SourceURL = raw.SourceURL
+	r.Review = raw.Review
+	if raw.ConsumedOn != nil {
+		r.ConsumedOn = *raw.ConsumedOn
+	} else {
+		r.ConsumedOn = DateOnly{}
+	}
+
+	return nil
 }
 
 func (r *CreateRequest) Normalize() {
