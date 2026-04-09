@@ -27,6 +27,9 @@ Out of scope:
 - Multiple images per entry
 - Metadata scraping from URLs
 - Uploading book/video files or storing book content
+- Single-entry GET endpoint (`GET /api/v1/journal/{entryID}`) — not needed in v1 because the UI operates on the full list
+- Object storage or CDN for uploaded images — v1 uses local server storage only
+- Orphan file cleanup for uploads that were initiated but not saved
 
 ## Design Intent
 
@@ -170,9 +173,9 @@ The module should be wired into the main router as a separate authenticated reso
 
 ### API
 
-- `GET /api/v1/journal`
+- `GET /api/v1/journal` — returns all entries ordered by `consumed_on` DESC, then `created_at` DESC
 - `POST /api/v1/journal`
-- `PATCH /api/v1/journal/{entryID}`
+- `PATCH /api/v1/journal/{entryID}` — partial update; backend must reject an empty body
 - `DELETE /api/v1/journal/{entryID}`
 - `POST /api/v1/uploads/images`
 
@@ -186,10 +189,12 @@ Behavior:
 
 - accept multipart form uploads
 - validate that the uploaded file is an image
-- store the file in a local/server-managed uploads location suitable for the current deployment model
-- return a URL that the frontend can persist as `imageUrl`
+- store the file under `./uploads/images/` on the server, served as static files at `/uploads/images/<filename>`
+- return a URL in the form `/uploads/images/<filename>` that the frontend can persist as `imageUrl`
 
 This design keeps the journal record simple because the journal table only stores the resolved image URL. It does not need separate fields for uploaded-vs-remote image source in v1.
+
+Known v1 limitation: if the user uploads a file and then abandons the form without saving, the uploaded file becomes an orphan on disk. Cleanup is deferred to a future version.
 
 ## Data Model
 
@@ -224,8 +229,9 @@ Frontend and backend should align on the same contract:
 - `title` is required after trimming whitespace
 - `title` should cap at 200 characters
 - `consumedOn` is required
-- `sourceUrl` must be a valid URL when present
-- `imageUrl` must be a valid URL when present
+- `sourceUrl` is optional; must be a valid URL when present
+- `imageUrl` is optional; must be a valid URL when present
+- `review` is optional; no format constraints
 - upload endpoint must reject non-image files
 
 Patch/update validation should require at least one field, following the existing `Todo` pattern.
